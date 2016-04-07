@@ -1,0 +1,17 @@
+module InputOutput {
+	message GraphPropsMsg;
+template <class VertexData, class CProxy_Chares, GraphFileIOFormat F,
+		 GeneratorType G, DistrMode D >
+  group IO {
+	  entry IO(std::string &file);
+	  entry IO(uint16_t nScale, uint16_t K);
+	  entry void init(CProxy_Chares proxyChares);
+		entry void reqGraphProps(const CkCallback &cb);
+	  entry void loadGraphToChares();
+  }; 
+
+template <class C, GraphFileIOFormat D>
+  group Foo{
+	  entry Foo();
+  };
+};

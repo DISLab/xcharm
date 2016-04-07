@@ -1,0 +1,68 @@
+******************************
+GraphHPC-2015 contest      
+******************************
+
+===============================================================================
+
+Authors
+-------
+Timur Ismagilov
+Elizaveta Golovina
+Alexander Semenov   
+
+RMAT graph generator is adapted from snap-0.4 http://snap-graph.sourceforge.net
+SSCA2 graph generator is adapted from GTgraph http://www.cse.psu.edu/~madduri/software/GTgraph
+
+Description of executables:
+---------------------------
+gen_RMAT                -- RMAT graph serial generator 
+gen_SSCA2               -- SSCA2 graph serial generator
+mst_reference           -- reference serial implementation of MST (Prim's algorithm)
+gen_valid_info          -- tool for generation validation information, the tool uses reference MST implementation
+validation              -- validation tool
+
+mst                     -- stub for parallel user implementation
+
+===============================================================================
+
+To implement your own algorithm, write code in mst.cpp    
+
+To build implementations, type `make'
+
+Requirements:
+-------------------
+MPI 2.2 is required for MPI types.
+
+Brief instructions:
+-------------------
+Example of testing your implementation by hands:
+
+1. Run graph generator:
+
+    $ ./gen_SSCA2 -s 10
+
+2. Generate validation information for the graph:
+
+    $ ./gen_valid_info -in ssca2-10
+
+3. Run your implementation:
+
+    $ ./mst_reference -in ssca2-10
+
+4. Run validation tool:
+
+    $ ./validation -in_graph ssca2-10 -in_result ssca2-10.mst -in_valid ssca2-10.vinfo
+
+    
+===============================================================================
+Change Log:
+---------------------------
+Date        Version     Comments
+18.02.2015  1.0         1) MPI reference implementation and Boruvka reference implementation are added 2) minor changes 
+02.02.2015  0.3         1) SSCA2 parameters fixed. Size of SSCA2 graph equals to size of RMAT graph for the current scale 2) Bugs in the graphs generation and MPI functions fixed 
+20.01.2015  0.2         1) main_mpi implemented. MPI graph generation on the fly is added. MPI validation works. 
+                            2) Performance printing for automatic system is added 
+                            3) pass_tests.sh is excluded (temporary?)
+31.12.2014  0.1.2       1) Bug fixed in mst_reference. 2) pass_tests.sh and tests in t directory are added. 3) MPI graph reading from file is added 
+24.12.2014  0.1.1       Minor release
+23.12.2014  0.1         Initial release

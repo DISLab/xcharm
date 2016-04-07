@@ -1,0 +1,32 @@
+mainmodule mst_boruvka_naive {
+  extern module InputOutput;
+  readonly CProxy_Main mainProxy;
+  readonly CProxy_IO<SSSPVertexInputData, CProxy_SSSPVertex, GraphFileIOFormat::GraphHPC, GeneratorType::Random, DistrMode::Block > io;
+  //readonly CProxy_SSSPVertex g;
+  //readonly int nScale;
+  //readonly int nK;
+
+  class SSSPVertexInputData;
+  class SSSPEdgeS;
+  class SSSPEdgeD;
+
+  mainchare Main {
+    entry Main(CkArgMsg *m);
+    entry void init(void);
+    entry void loadGraph(void);
+		entry void recvGraphProps(GraphPropsMsg *m);
+
+		// boruvka's algorithm phases
+    entry [threaded] void startIteration(void);
+  };
+
+  array [1D] SSSPVertex {
+    entry SSSPVertex(void);
+    entry void init(CProxy_SSSPVertex &g);
+		entry void acceptVertexData(SSSPVertexInputData &vdata);
+    entry void print(void);
+	};        	
+
+  group IO<SSSPVertexInputData, CProxy_SSSPVertex, GraphFileIOFormat::GraphHPC, GeneratorType::Random, DistrMode::Block>;
+};
+

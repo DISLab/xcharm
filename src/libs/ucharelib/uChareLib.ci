@@ -1,0 +1,30 @@
+module uChareLib {
+	extern module NDMeshStreamer;
+
+	readonly std::size_t N_uChares;
+	readonly std::size_t N_uChareSets;
+
+	message AggregatedMessage;
+
+	class Message;
+
+	template <class User_uChare, class User_uChare_Proxy, class User_uChare_Base>
+		array [1D] uChareSet {
+			entry uChareSet(bool useTRAM);
+			entry uChareSet(CkMigrateMessage *m);
+
+			entry void init(const CProxy_ArrayMeshStreamer<Message, int, 
+					uChareSet<User_uChare, User_uChare_Proxy, User_uChare_Base>, SimpleMeshRouter> &aggregator);
+			entry void run(CkCallback &cb, CmiUInt8 index = 0, int allRun = 1);
+			entry void run(int phase, CkCallback &cb, CmiUInt8 index = 0, int allRun = 1);
+			entry void run();
+			entry void exit();
+			entry void flush(CkCallback &cb);
+			entry void flush();
+			entry void recvAggregatedMsg(AggregatedMessage *m);
+			//entry void gatherPendingMessagesNum(const CkCallback &cb); 
+		};
+
+  //message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  //group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

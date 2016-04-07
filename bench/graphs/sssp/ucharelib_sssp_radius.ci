@@ -1,0 +1,44 @@
+mainmodule ucharelib_sssp {
+	extern module GraphGenerator;
+	extern module uChareLib;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices)
+  readonly CmiUInt8                         N;
+  readonly CmiUInt8                         M;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void init();
+    entry [reductiontarget] void start();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    //entry void startVerificationPhase();
+    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
+    //entry void checkErrors();
+		entry void startGraphConstruction();
+  };
+
+	class SSSPEdge; 
+  uchare array [1D] SSSPVertex {
+    entry SSSPVertex();
+		entry void connectVertex(const SSSPEdge & edge);
+		entry void make_root();
+		entry void update(const CmiUInt8 & v, const double & w); 
+		entry void verify();
+		entry void check(const double & w);
+  };
+
+	group GraphGenerator<CProxy_uChare_SSSPVertex, SSSPEdge, Options>;
+
+//TODO: Can it be hidden?`
+	array [1D] uChareSet<SSSPVertex, CProxy_SSSPVertex, CBase_SSSPVertex>;
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<SSSPVertex, CProxy_SSSPVertex, CBase_SSSPVertex>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

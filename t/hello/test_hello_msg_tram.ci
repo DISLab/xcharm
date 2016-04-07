@@ -1,0 +1,28 @@
+mainmodule test_hello_msg_tram {
+	extern module uChareLib;
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [threaded] void init();
+		entry [reductiontarget] void start();
+		entry void done();
+	};
+
+	class Msg;
+	uchare array [1D] Hello {
+		entry void ping (int callee); 
+		entry void ping2 (Msg msg); 
+	}; 
+
+//TODO: Can it be hidden?`
+  readonly CProxy_ArrayMeshStreamer<Message, int, 
+	           uChareSet<Hello, CProxy_Hello, CBase_Hello>, SimpleMeshRouter> aggregator;
+	array [1D] uChareSet<Hello, CProxy_Hello, CBase_Hello>;
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Hello, CProxy_Hello, CBase_Hello>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

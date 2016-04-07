@@ -1,0 +1,44 @@
+mainmodule ucharelib_randomAccess {
+	extern module uChareLib;
+
+  // log_2 of the local table size
+  readonly int                             N;
+  // The local table size
+  readonly CmiInt8                         localTableSize;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+  // Handle to the communication library (group)
+  //readonly CProxy_ArrayMeshStreamer<dtype, int, Updater,
+  //                                  SimpleMeshRouter> aggregator;
+  // Number of chares per PE
+  readonly int            numElementsPerPe;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void init();
+    entry [reductiontarget] void start();
+    entry void startVerificationPhase();
+    entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
+    entry void checkErrors();
+		entry [reductiontarget] void done();
+  };
+
+	
+	uchare array [1D] Updater {
+		entry Updater();
+		entry void update(const CmiUInt8 &key);
+		entry [reentrant] void generateUpdates();
+		entry void checkErrors();
+	};
+
+//TODO: Can it be hidden?`
+  //readonly CProxy_ArrayMeshStreamer<Message, int, 
+	//           uChareSet<Updater, CProxy_Updater, CBase_Updater>, SimpleMeshRouter> aggregator;
+	array [1D] uChareSet<Updater, CProxy_Updater, CBase_Updater>;
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Updater, CProxy_Updater, CBase_Updater>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

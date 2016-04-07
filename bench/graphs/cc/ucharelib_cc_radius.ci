@@ -1,0 +1,39 @@
+mainmodule ucharelib_cc {
+	extern module GraphGenerator;
+	extern module uChareLib;
+
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void init();
+    entry [reductiontarget] void start();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done();
+    //entry void startVerificationPhase();
+    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
+    //entry void checkErrors();
+		entry void startGraphConstruction();
+  };
+
+	class CCEdge; 
+  uchare array [1D] CCVertex {
+    entry CCVertex();
+		entry void connectVertex(const CCEdge & edge);
+		entry [reentrant] void start();
+		entry [reentrant] void update(const CmiUInt8 & c);
+		entry void verify();
+		entry void check(const CmiUInt8 & c);
+  };
+
+	group GraphGenerator<CProxy_uChare_CCVertex, CCEdge, Options>;
+
+//TODO: Can it be hidden?`
+	array [1D] uChareSet<CCVertex, CProxy_CCVertex, CBase_CCVertex>;
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<CCVertex, CProxy_CCVertex, CBase_CCVertex>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

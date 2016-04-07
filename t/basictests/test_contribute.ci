@@ -1,0 +1,31 @@
+mainmodule test_contribute {
+	extern module uChareLib;
+	readonly CmiUInt8 N;
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [reductiontarget] void init();
+		entry [reductiontarget] void start();
+		entry [reductiontarget] void done();
+		entry [reductiontarget] void verify_contribute(CmiUInt8 r);
+	};
+
+	uchare array [1D] Hello {
+		entry void call_contribute(/*CkReduction::reducerType op,*/ CmiUInt8 v);
+	}; 
+
+	array [1D] Hello_charm_ref	{
+		entry Hello_charm_ref();
+		entry void call_contribute(/*CkReduction::reducerType op,*/ CmiUInt8 v);
+	}; 
+
+//TODO: Can it be hidden?`
+//  readonly CProxy_ArrayMeshStreamer<Message, int, 
+//	           uChareSet<Hello, CProxy_Hello, CBase_Hello>, SimpleMeshRouter> aggregator;
+	array [1D] uChareSet<Hello, CProxy_Hello, CBase_Hello>;
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Hello, CProxy_Hello, CBase_Hello>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

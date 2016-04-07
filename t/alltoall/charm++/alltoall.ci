@@ -1,0 +1,16 @@
+mainmodule alltoall {
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [reductiontarget] void init();
+		entry [reductiontarget] void start();
+		entry void done();
+		entry void abort();
+	};
+
+	array [1D] Alltoall {
+		entry void ping (int callee); 
+		entry void start();
+	}; 
+};

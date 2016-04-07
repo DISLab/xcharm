@@ -1,0 +1,6 @@
+Experimental charmxi translator by
+	Alexander Frolov, alexndr.frolov@gmail.com
+
+0. BUILD
+	* Copy conv-autoconfig.h from Charm++ installation directory to current directory
+	* make charmxi

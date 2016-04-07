@@ -1,0 +1,7 @@
+module GraphGenerator {
+	template <class Graph, class Edge, class Opts> 
+		group GraphGenerator {
+			entry GraphGenerator(Graph & g, Opts & opts);
+			entry void generate();
+		};
+};

@@ -1,0 +1,16 @@
+mainmodule charm_alltoall {
+	readonly CmiUInt8 N;
+	readonly CProxy_TestDriver driverProxy;
+
+	mainchare TestDriver {
+		entry TestDriver(CkArgMsg *m);
+		entry [reductiontarget] void init();
+		entry [reductiontarget] void done();
+	};
+
+	array [1D] Alltoall {
+		entry Alltoall();
+		entry void ping();
+		entry void run();
+	};
+};

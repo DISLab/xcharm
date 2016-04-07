@@ -1,0 +1,34 @@
+mainmodule proxytest {
+	extern module uChareLib;
+	readonly CProxy_Main mainProxy; 
+	readonly CmiUInt8 N;
+	readonly CmiUInt8 M;
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [reductiontarget] void init();
+		entry [reductiontarget] void start();
+		entry [reductiontarget] void done();
+		entry void abort();
+	};
+
+	uchare array [1D] Consumer {
+		entry void recv (int callee); 
+	}; 
+
+	array [1D] Producer {
+		entry Producer(CProxy_uChare_Consumer &consumers);
+		entry void send (); 
+	}; 
+
+//TODO: Can it be hidden? Ahh. No way it seems.
+//  readonly CProxy_ArrayMeshStreamer<Message, int, 
+//	           uChareSet<Consumer, CProxy_Consumer, CBase_Consumer>, SimpleMeshRouter> aggregator;
+
+  // Setup required for ucharelib
+	array [1D] uChareSet<Consumer, CProxy_Consumer, CBase_Consumer>;
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Consumer, CProxy_Consumer, CBase_Consumer>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

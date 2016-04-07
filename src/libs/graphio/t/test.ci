@@ -1,0 +1,24 @@
+mainmodule test {
+  extern module InputOutput;
+  readonly CProxy_Main mainProxy;
+  readonly CProxy_Vertex vertexProxy;
+  readonly CProxy_IO<VertexData, CProxy_Vertex, GraphFileIOFormat::GraphHPC, DistrMode::Block > ioProxy;
+  readonly int nScale;
+  readonly int nK;
+
+  mainchare Main {
+    entry Main(CkArgMsg *m);
+    entry void done();
+  };
+
+  class VertexData; 
+  array [1D] Vertex {
+    entry Vertex(void);
+    entry void print(void);
+	entry void acceptVertexData(VertexData &vdata);
+  };        	
+
+  group IO<VertexData, CProxy_Vertex, GraphFileIOFormat::GraphHPC, DistrMode::Block>;
+  group Foo<VertexData, GraphFileIOFormat::GraphHPC>;
+};
+

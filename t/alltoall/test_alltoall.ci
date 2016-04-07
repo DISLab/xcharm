@@ -1,0 +1,17 @@
+mainmodule test_alltoall {
+	extern module uChareLib;
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry void reportInitializationCompletion();
+		entry void done();
+		entry [threaded] void run();
+	};
+
+	uchare array [1D] Alltoall {
+		entry void ping (int callee); 
+	}; 
+
+	array [1D] uChareSet<Alltoall, CProxy_Alltoall, CBase_Alltoall>;
+};

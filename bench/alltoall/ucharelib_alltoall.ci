@@ -1,0 +1,24 @@
+mainmodule ucharelib_alltoall {
+	extern module uChareLib;
+	readonly CmiUInt8 N;
+	readonly CProxy_TestDriver driverProxy;
+
+	mainchare TestDriver {
+		entry TestDriver(CkArgMsg *m);
+		entry [reductiontarget] void init();
+		entry [reductiontarget] void start();
+		entry [reductiontarget] void done();
+	};
+
+	uchare array [1D] Alltoall {
+		entry Alltoall();
+		entry void ping();
+		entry [reentrant] void start();
+	};
+
+	array [1D] uChareSet<Alltoall, CProxy_Alltoall, CBase_Alltoall>;
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Alltoall, CProxy_Alltoall, CBase_Alltoall>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

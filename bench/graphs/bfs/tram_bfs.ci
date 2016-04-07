@@ -1,0 +1,39 @@
+mainmodule tram_bfs {
+	extern module GraphGenerator;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices)
+  readonly CmiUInt8                        N;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+  // Handle to the communication library (group)
+  readonly CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
+                                    SimpleMeshRouter> aggregator;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void start();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    //entry void startVerificationPhase();
+    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
+    //entry void checkErrors();
+		entry void startGraphConstruction();
+  };
+
+	class BFSEdge;
+  array [1D] BFSVertex {
+    entry BFSVertex();
+		entry void connectVertex(const BFSEdge & edge);
+		entry void make_root(); 
+		entry void getScannedEdgesNum();
+  };
+
+	group GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>;
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
+  group ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
+};

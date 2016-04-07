@@ -1,0 +1,34 @@
+mainmodule test_reentrant_ep {
+	extern module uChareLib;
+	readonly CmiUInt8 N;
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [reductiontarget] void init();
+		entry void start__reentrant();
+		entry void done__reentrant();
+		entry void start__nonreentrant();
+		entry void done__nonreentrant();
+		entry void done();
+		entry void exit();
+	};
+
+	uchare array [1D] Hello {
+		entry [reentrant] void ping__reentrant (int callee); 
+		entry void start__reentrant();
+		entry void ping__nonreentrant (int callee); 
+		entry void start__nonreentrant();
+		entry void print();
+		entry void clear();
+	}; 
+
+//TODO: Can it be hidden?`
+//  readonly CProxy_ArrayMeshStreamer<Message, int, 
+//	           uChareSet<Hello, CProxy_Hello, CBase_Hello>, SimpleMeshRouter> aggregator;
+	array [1D] uChareSet<Hello, CProxy_Hello, CBase_Hello>;
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Hello, CProxy_Hello, CBase_Hello>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

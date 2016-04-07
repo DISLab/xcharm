@@ -1,0 +1,16 @@
+mainmodule test_hello {
+	extern module uChareLib;
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [reductiontarget] void start();
+		entry void done();
+	};
+
+	uchare array [1D] Hello {
+		entry void hello(int callee);
+	  entry void buybuy(int callee); 	
+	}; 
+	array [1D] uChareSet<Hello, CProxy_Hello, CBase_Hello>;
+};

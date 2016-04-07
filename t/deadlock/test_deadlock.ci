@@ -1,0 +1,28 @@
+mainmodule test_deadlock {
+	extern module uChareLib;
+	readonly CProxy_Main mainProxy; 
+
+	mainchare Main {
+		entry Main(CkArgMsg *m);
+		entry [threaded] void init();
+		entry [reductiontarget] void start();
+		entry void done();
+	};
+
+	uchare array [1D] Alltoall {
+		entry void ping (int callee); 
+		entry void pong (int callee); 
+		entry void start();
+	}; 
+
+//TODO: Can it be hidden?`
+  readonly CProxy_ArrayMeshStreamer<Message, int, 
+	           uChareSet<Alltoall, CProxy_Alltoall, CBase_Alltoall>, SimpleMeshRouter> aggregator;
+	array [1D] uChareSet<Alltoall, CProxy_Alltoall, CBase_Alltoall>;
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
+  group ArrayMeshStreamer<Message, int, 
+				uChareSet<Alltoall, CProxy_Alltoall, CBase_Alltoall>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+};

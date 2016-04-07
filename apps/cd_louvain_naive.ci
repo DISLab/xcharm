@@ -1,0 +1,83 @@
+mainmodule cd_louvain_naive {
+  extern module InputOutput;
+  readonly CProxy_Main mainProxy;
+  readonly CProxy_IO<VertexData, CProxy_CDVertex, GraphFileIOFormat::GraphHPC, GeneratorType::Random, DistrMode::Block > io;
+  //readonly CProxy_CDVertex g;
+  //readonly CProxy_CDComm c;
+
+  readonly int nScale;
+  readonly int nK;
+
+	class CProxy_CDVertex; // FIXME!
+	array [1D] CDComm {
+		entry CDComm();
+		entry void init(double &m);
+		entry void init(CProxy_CDVertex &g, CProxy_CDComm &c);
+		entry void updateVertexCommunityConnections(uint64_t s, std::map<uint64_t, double> connections);
+		entry void calculateDeltaSigma (uint64_t sc, uint64_t u, double wu, double wc);
+	  entry void calculateDeltaSigma(uint64_t sc, uint64_t u, double delta);
+		entry void searchMaxDelta();
+		entry void filterTransitions();
+		entry void doTransitions();
+		entry void transitionRequest(uint64_t sc, double delta);
+		entry void transitionResponse(uint64_t sc, bool res);
+		entry void calculateModularity();
+		entry void reconstructCommunityGraph();
+		entry void getTotalWeight();
+	};
+
+  class VertexData;
+	array [1D] CDVertex {
+		entry CDVertex(void);
+		entry void init(CProxy_CDVertex &g, CProxy_CDComm &c);
+		entry void acceptVertexData(VertexData &vdata);
+		entry void updateEdgeList(uint64_t comm, std::map<uint64_t, double> edgelist); 
+		entry void updateCommunityIds();
+		entry void getCommunityId(uint64_t s);
+		entry void setCommunityId(uint64_t comm);
+
+
+		entry void print(void);
+		//entry void update();
+		//entry void search();
+		//entry void merge();
+
+		//init
+		entry void addEdge(uint64_t, double);
+
+		entry void doLouvainIteration_phase1();
+
+		entry void recvNeighTotalWeight(uint64_t src, CmiFloat8 w);
+
+		entry void updateCommunity(uint64_t comm);
+		entry void updateNeighComm(uint64_t sv, uint64_t comm);
+	};        	
+
+  mainchare Main {
+    entry Main(CkArgMsg *m);
+    entry void init(void);
+    entry void loadGraph(void);
+		entry void recvGraphProps(GraphPropsMsg *m);
+
+		// louvain algorithm phases
+		entry void doLouvainIteration();
+		entry void doLouvainIteration_phase1();
+		entry void doLouvainIteration_phase1_reportModularity();
+		entry void doLouvainIteration_phase1_1();
+		entry void doLouvainIteration_phase1_2();
+		entry void doLouvainIteration_phase1_3();
+		entry void doLouvainIteration_phase2();
+		entry void doLouvainIteration_phase2_1();
+
+    entry [reductiontarget] void reportModularity(CmiFloat8 mod);
+		entry [reductiontarget] void calcTotalEdgeWeight(CmiFloat8 w);
+		entry [reductiontarget] void getTotalWeight(CmiFloat8 mod);
+
+    entry void done(void);
+    entry void exit(void);
+		entry void setStopFlag(bool);
+  };
+
+  group IO<VertexData, CProxy_CDVertex, GraphFileIOFormat::GraphHPC, GeneratorType::Random, DistrMode::Block>;
+};
+

@@ -1,0 +1,32 @@
+mainmodule charm_bfs {
+	extern module GraphGenerator;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices)
+  readonly CmiUInt8                         N;
+  readonly CmiUInt8                         M;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void start();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    //entry void startVerificationPhase();
+    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
+    //entry void checkErrors();
+		entry void startGraphConstruction();
+  };
+
+	class BFSEdge;
+  array [1D] BFSVertex {
+    entry BFSVertex();
+		entry void connectVertex(const BFSEdge & edge);
+		entry void update(); 
+		entry void getScannedEdgesNum();
+  };
+
+	group GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>;
+};
