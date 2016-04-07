@@ -1,4 +1,4 @@
-CHARMC= ../../../bin/charmc 
+include ../../../config.mk
 CHARMXI=../../../bin/charmxi
 CHARMC_COMPILE_FLAGS=-I./include/graph500 -I$(BOOST_ROOT)/include
 CHARMC_LINK_FLAGS=-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono

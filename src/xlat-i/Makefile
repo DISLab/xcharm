@@ -26,6 +26,7 @@ L=../lib
 INC=../include
 
 include charmpath.mk
+include ../../config.mk
 
 #CC=$(CHARMC)
 #CXX=$(CHARMC)

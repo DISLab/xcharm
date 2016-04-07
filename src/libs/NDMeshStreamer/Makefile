@@ -1,3 +1,4 @@
+include ../../../config.mk
 CDIR=$(CHARM_HOME)
 #INCDIR=$(CDIR)/include
 INCDIR=.

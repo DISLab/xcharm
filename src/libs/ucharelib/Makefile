@@ -1,3 +1,4 @@
+include ../../../config.mk
 OPTS=-std=c++11 -O3
 #OPTS=-std=c++11 -g
 #OPTS=-std=c++11 -g -tracemode projections 

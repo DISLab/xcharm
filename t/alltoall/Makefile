@@ -1,5 +1,5 @@
+-include ../../config.mk
 -include ../common.mk
-CHARMC=../../bin/charmc 
 CHARMXI=../../bin/charmxi
 CHARMC_COMPILE_FLAGS=-I. -I../../include -I../../include/ucharelib -I../../include/NDMeshStreamer
 CHARMC_LINK_FLAGS=-L../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer -module completion -module ampi

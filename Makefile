@@ -9,12 +9,17 @@ libs:
 	make -C src/libs/ucharelib all
 	make -C src/libs/graphrt all
 
+test:
+	make -C t test
+
+bench:
+	make -C bench all
+
 clean:
 	rm -f ./lib/* ./bin/* ./include/*
 	make -C src/xlat-i xi-clean
 	make -C src/libs/NDMeshStreamer clean
 	make -C src/libs/ucharelib clean
 	make -C src/libs/graphrt clean
-
-test:
-	make -C t test
+	make -C t clean
+	make -C bench clean

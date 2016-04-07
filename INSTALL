@@ -1,0 +1,29 @@
+-------------------------------------------------------------------------------
+                       Installation guide for XCharm 
+-------------------------------------------------------------------------------
+The XCharm build system is minimalistic and configured via set of environment 
+veriables and make utility. 
+
+Dependencies
+============
+
+			1. Charm++ 6.7.0 or greater
+			2. Boost 1.54 or greater
+
+Configuring, compiling and testing
+==================================
+
+1. For configuring XCharm do
+
+	export CHARM_HOME=/path/to/charm++
+	export BOOST_ROOT=/path/to/boost
+	./configure
+	cp $CHARM_HOME/<build-dir>/include/conv-autoconfig.h ./src/xlat-i
+
+2. For building XCharm do
+
+	make all
+
+3. For running functionality tests do
+
+	make tests

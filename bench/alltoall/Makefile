@@ -1,4 +1,4 @@
-CHARMC=../../bin/charmc 
+include ../../config.mk
 CHARMXI=../../bin/charmxi
 CHARMC_COMPILE_FLAGS=
 CHARMC_LINK_FLAGS=
