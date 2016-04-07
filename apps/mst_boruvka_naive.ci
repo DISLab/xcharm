@@ -1,0 +1,69 @@
+mainmodule mst_boruvka_naive {
+  extern module InputOutput;
+  readonly CProxy_Main mainProxy;
+  readonly CProxy_IO<MSTVertexInputData, CProxy_MSTVertex, GraphFileIOFormat::GraphHPC, GeneratorType::Random, DistrMode::Block > io;
+  //readonly CProxy_MSTVertex g;
+  //readonly int nScale;
+  //readonly int nK;
+
+  class MSTVertexInputData;
+  class MSTEdgeS;
+  class MSTEdgeD;
+
+  mainchare Main {
+    entry Main(CkArgMsg *m);
+    entry void init(void);
+    entry void loadGraph(void);
+		entry void recvGraphProps(GraphPropsMsg *m);
+
+		// boruvka's algorithm phases
+    entry [threaded] void startIteration(void);
+    entry void searchDone(void);
+    entry void mergeDone(void);
+		entry void updateLocalDone(void);
+    entry void done(void);
+    entry void exit(void);
+		entry void print(CkCallback &cb);
+		entry void setStopFlag(bool);
+		entry void acceptTreeEdge(uint64_t treeId, MSTEdgeD &edge); 
+		entry void addMSTRoot(uint64_t root);
+		entry void gatherMSTRoots();
+		entry void gatherMST();
+		entry void gatherMST_impl();
+  };
+
+  array [1D] MSTVertex {
+    entry MSTVertex(void);
+    entry void init(CProxy_MSTVertex &g);
+		entry void acceptVertexData(MSTVertexInputData &vdata);
+    entry void print(void);
+
+		//common
+		entry void addEdgeToMST(uint64_t src, double w);
+
+		//search
+    entry void search();
+		entry void postMinWeight(uint64_t vid, double weight);
+
+    /*entry void searchMinimalExternalEdge();
+    entry void searchMinimalExternalEdge_postMinimalWeight();
+		entry void search_postMinWeight(uint64_t vid, double weight);*/
+
+		// merge
+    entry void merge();
+		entry void propagateSuperVertexId(uint64_t src, uint64_t svid, bool connected);
+
+		// update local
+		entry void updateLocal();
+		entry void updateLocalInNeighbor(uint64_t src, uint64_t svid);
+		entry void updateLocalInNeighborReply(uint64_t src);
+		
+		// print mst
+		entry void gatherMSTRoots();
+		entry void gatherMST();
+		entry void gatherMST(uint64_t src, double weight, uint64_t id);
+	};        	
+
+  group IO<MSTVertexInputData, CProxy_MSTVertex, GraphFileIOFormat::GraphHPC, GeneratorType::Random, DistrMode::Block>;
+};
+
