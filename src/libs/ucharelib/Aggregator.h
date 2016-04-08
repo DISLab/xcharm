@@ -203,8 +203,8 @@ class TramAggregator : public Aggregator {
 
 					int delta = 100;
 					if (abs(delayedMessages.size()-oldsize) > delta) {
-						//CkPrintf("[chare=%d,pe=%d]: %d messages, total delayed messages %d (%d)\n",
-						//		uchareset.getId(), uchareset.getPe(), delayedMessages.size()-oldsize, delayedMessages.size(), oldsize);
+						CkPrintf("[chare=%d,pe=%d]: %d messages, total delayed messages %d (%d)\n",
+								uchareset.getId(), uchareset.getPe(), delayedMessages.size()-oldsize, delayedMessages.size(), oldsize);
 						oldsize = delayedMessages.size();
 					}
 

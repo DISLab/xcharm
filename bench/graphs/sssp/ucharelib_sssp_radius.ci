@@ -1,4 +1,4 @@
-mainmodule ucharelib_sssp {
+mainmodule ucharelib_sssp_radius {
 	extern module GraphGenerator;
 	extern module uChareLib;
 

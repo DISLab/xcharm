@@ -27,7 +27,7 @@ struct SSSPEdge {
 	}
 };
 
-#include "ucharelib_sssp.decl.h"
+#include "ucharelib_sssp_radius.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
@@ -128,8 +128,6 @@ public:
 		CkPrintf("SSSP running...\n");
 		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		;
-		
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
@@ -187,4 +185,4 @@ public:
   }
 };
 
-#include "ucharelib_sssp.def.h"
+#include "ucharelib_sssp_radius.def.h"

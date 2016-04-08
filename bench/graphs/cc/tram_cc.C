@@ -214,6 +214,7 @@ public:
 		//aggregator.finish();
 		//aggregator.syncInit();
 		//aggregator.flushToIntermediateDestinations();
+		if (opts.verify) g.verify();
 		CkStartQD(CkIndex_TestDriver::done(), &thishandle);
   }
 
@@ -225,8 +226,6 @@ public:
 		//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
 		//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
 		//				 gteps / CkNumPes());
-		//g.print();
-		g.verify();
 
 		CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 	}

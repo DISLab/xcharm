@@ -125,7 +125,7 @@ public:
   }
 
   void startVerificationPhase() {
-		g.verify();
+		if (opts.verify) g.verify();
 		CkStartQD(CkIndex_TestDriver::done(), &thishandle);
   }
 

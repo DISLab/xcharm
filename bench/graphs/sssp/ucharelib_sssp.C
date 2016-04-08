@@ -29,8 +29,6 @@ struct SSSPEdge {
 
 #include "ucharelib_sssp.decl.h"
 
-CmiUInt8 N, M;
-int K = 16;
 CProxy_TestDriver driverProxy;
 
 class SSSPVertex : public CBase_uChare_SSSPVertex {
@@ -105,13 +103,11 @@ private:
 public:
   TestDriver(CkArgMsg* args) {
 		parseCommandOptions(args->argc, args->argv, opts);
-		N = opts.N;
-		M = opts.M;
 		root = opts.root;
     driverProxy = thishandle;
 
     // Create the chares storing vertices
-    g  = CProxy_uChare_SSSPVertex::ckNew(N, CkNumPes());
+    g  = CProxy_uChare_SSSPVertex::ckNew(opts.N, CkNumPes());
 		// create graph generator
 		generator = CProxy_GraphGenerator<CProxy_uChare_SSSPVertex, SSSPEdge, Options>::ckNew(g, opts); 
 
@@ -153,22 +149,22 @@ public:
 		//CkStartQD(CkIndex_TestDriver::done(), &thishandle);
   }
 
-  void done(CmiUInt8 globalNubScannedVertices) {
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNubScannedVertices, (double)globalNubScannedVertices*100/N);
-		if (globalNubScannedVertices < 0.25 * N) {
+  void done(CmiUInt8 nScanned) {
+			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
+		if (nScanned < 0.25 * opts.N) {
 			//root = rand_64(gen) % N;
-			root = rand() % N;
+			root = rand() % opts.N;
 			starttime = CkWallTimer();
 			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNubScannedVertices * 1.0/update_walltime;
+			double gteps = 1e-9 * nScanned * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNubScannedVertices, (double)globalNubScannedVertices*100/N);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
+			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
+			//				 gteps / CkNumPes());
 			CkExit();
 		}
   }

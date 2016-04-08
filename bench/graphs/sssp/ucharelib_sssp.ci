@@ -2,11 +2,6 @@ mainmodule ucharelib_sssp {
 	extern module GraphGenerator;
 	extern module uChareLib;
 
-  // Mean arrity of the graph 
-  readonly int                             K;
-  // Graph size (number of vertices)
-  readonly CmiUInt8                         N;
-  readonly CmiUInt8                         M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
 

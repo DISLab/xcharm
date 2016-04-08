@@ -1,4 +1,4 @@
-mainmodule ucharelib_cc {
+mainmodule ucharelib_cc_radius {
 	extern module GraphGenerator;
 	extern module uChareLib;
 
@@ -15,6 +15,8 @@ mainmodule ucharelib_cc {
     //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
     //entry void checkErrors();
 		entry void startGraphConstruction();
+		entry void resume();
+		entry void grayVertexExist();
   };
 
 	class CCEdge; 
@@ -22,7 +24,8 @@ mainmodule ucharelib_cc {
     entry CCVertex();
 		entry void connectVertex(const CCEdge & edge);
 		entry [reentrant] void start();
-		entry [reentrant] void update(const CmiUInt8 & c);
+		entry [reentrant] void resume();
+		entry [reentrant] void update(const CmiUInt8 & c, const int & r);
 		entry void verify();
 		entry void check(const CmiUInt8 & c);
   };

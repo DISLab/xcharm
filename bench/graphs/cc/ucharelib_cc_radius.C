@@ -2,6 +2,8 @@
 #include <GraphGenerator.h>
 #include <common.h>
 
+#define R 0
+
 struct CCEdge {
 	CmiUInt8 v;
 	double w;
@@ -27,17 +29,18 @@ struct CCEdge {
 	}
 };
 
-#include "ucharelib_cc.decl.h"
+#include "ucharelib_cc_radius.decl.h"
 
 CProxy_TestDriver driverProxy;
 
 class CCVertex : public CBase_uChare_CCVertex {
 private:
 	std::vector<CCEdge> adjlist;
+	enum State {White, Gray, Black} state;
 	CmiUInt8 componentId;
 
 public:
-  CCVertex(const uChareAttr_CCVertex & attr) : CBase_uChare_CCVertex(attr)	{
+  CCVertex(const uChareAttr_CCVertex & attr) : state(White), CBase_uChare_CCVertex(attr)	{
 		componentId = thisIndex;
     // Contribute to a reduction to signal the end of the setup phase
 		contribute(CkCallback(CkReductionTarget(TestDriver, init), driverProxy));
@@ -51,19 +54,34 @@ public:
 		// broadcast
 		typedef typename std::vector<CCEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v]->update(componentId);
+			thisProxy[it->v]->update(componentId, R);
 		}
 	}
 
-  void update(const CmiUInt8 & c) {
+	void resume() {
+		state = White;
+		// broadcast
+		typedef typename std::vector<CCEdge>::iterator Iterator; 
+		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+			thisProxy[it->v]->update(componentId, R);
+		}
+	}
+
+  void update(const CmiUInt8 & c, const int & r) {
 		if (c < componentId) {
 			// update current componentId
 			componentId = c;
-			// broadcast
-			typedef typename std::vector<CCEdge>::iterator Iterator; 
-			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-				thisProxy[it->v]->update(componentId);
-			}
+
+			// check radius
+			if (r > 0) {
+				// broadcast
+				typedef typename std::vector<CCEdge>::iterator Iterator; 
+				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+					thisProxy[it->v]->update(componentId, r - 1);
+				}
+			} else
+				state = Gray;
+				driverProxy.grayVertexExist();
 		}
   }
 
@@ -82,14 +100,14 @@ public:
 class TestDriver : public CBase_TestDriver {
 private:
   CProxy_uChare_CCVertex  g;
-	CmiUInt8 root;
-  double starttime;
+  double starttime, endtime;
 	Options opts;
+	bool complete;
 
 	CProxy_GraphGenerator<CProxy_uChare_CCVertex, CCEdge, Options> generator;
 
 public:
-  TestDriver(CkArgMsg* args) {
+  TestDriver(CkArgMsg* args) : complete(true) {
 		parseCommandOptions(args->argc, args->argv, opts);
     driverProxy = thishandle;
 
@@ -122,16 +140,29 @@ public:
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-    CkPrintf("root = %lld\n", root);
     starttime = CkWallTimer();
 		g.start();
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
   }
 
+	void resume() {
+		if (!complete) {
+			complete = true;
+			g.resume();
+			CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
+		}
+		else startVerificationPhase();
+	}
+
   void startVerificationPhase() {
-		g.verify();
+		double update_walltime = CkWallTimer() - starttime;
+		if (opts.verify) g.verify();
 		CkStartQD(CkIndex_TestDriver::done(), &thishandle);
   }
+
+	void grayVertexExist() {
+		complete = false;
+	}
 
 	void done() {
 		double update_walltime = CkWallTimer() - starttime;
@@ -158,4 +189,4 @@ public:
   }
 };
 
-#include "ucharelib_cc.def.h"
+#include "ucharelib_cc_radius.def.h"
