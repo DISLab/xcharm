@@ -62,13 +62,15 @@ public:
 		}
   }
 
-	void verify() {
-		if ((parent != -1) && (parent != thisIndex))
-			thisProxy[parent].check(weight);
-		
+	void countScannedVertices() {
 		CmiUInt8 c = (parent == -1 ? 0 : 1);	
 		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
 				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	}
+
+	void verify() {
+		if ((parent != -1) && (parent != thisIndex))
+			thisProxy[parent].check(weight);
 	}
 
 	void check(double w) {
@@ -131,12 +133,11 @@ public:
     CkPrintf("root = %lld\n", root);
     starttime = CkWallTimer();
 		g[root].make_root();
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::countScannedVertices(), &thishandle);
   }
 
-  void startVerificationPhase() {
-		g.verify();
-		//CkStartQD(CkIndex_TestDriver::done(), &thishandle);
+  void countScannedVertices() {
+		g.countScannedVertices();
   }
 
   void done(CmiUInt8 nScanned) {
@@ -158,11 +159,16 @@ public:
 
 			//g.print();
 
+			if (opts.verify) {
+				CkPrintf("Run verification...\n");
+				g.verify();
+			}
 			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 		}
   }
 
 	void exit() {
+		CkPrintf("Done. Exit.\n");
 		CkExit();
 	}
 

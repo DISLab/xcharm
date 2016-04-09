@@ -6,13 +6,10 @@ mainmodule charm_sssp {
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
-		entry void startVerificationPhase();
-    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-    //entry void startVerificationPhase();
-    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
-    //entry void checkErrors();
 		entry void startGraphConstruction();
+    entry [reductiontarget] void start();
+		entry void countScannedVertices();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
 		entry void exit();
   };
 
@@ -22,6 +19,7 @@ mainmodule charm_sssp {
 		entry void connectVertex(const SSSPEdge & edge);
 		entry void make_root();
 		entry void update(const CmiInt8 & v, const double & w); 
+		entry void countScannedVertices();
 		entry void verify();
 		entry void check(const double & w);
 		entry void print();
