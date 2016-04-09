@@ -5,7 +5,7 @@
 #include <sstream>
 
 #define RADIUS
-#define R 10
+#define R 4
 
 typedef struct __dtype {
 	CmiUInt8 v;
@@ -74,8 +74,10 @@ public:
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 #if defined (RADIUS)
 			localAggregator->insertData(dtype(thisIndex, weight + it->w, R), it->v);
+			//thisProxy[it->v].update(dtype(thisIndex, weight + it->w, R));
 #else
 			localAggregator->insertData(dtype(thisIndex, weight + it->w), it->v);
+			//thisProxy[it->v].update(dtype(thisIndex, weight + it->w));
 #endif
 		}
 	}
@@ -86,6 +88,8 @@ public:
 #if defined (RADIUS)
 		const int & r = m.r;
 #endif
+
+		//CkAbort("process called");
 
     ArrayMeshStreamer<dtype, int, SSSPVertex, SimpleMeshRouter>
       * localAggregator = aggregator.ckLocalBranch();
@@ -137,18 +141,21 @@ public:
 					thisProxy[it->v].update(dtype(thisIndex, weight + it->w, R));
 #else
 				localAggregator->insertData(dtype(thisIndex, weight + it->w), it->v);
+				//thisProxy[it->v].update(dtype(thisIndex, weight + it->w));
 #endif
 			}
 		}
   }
 
-	void verify() {
-		if ((parent != -1) && (parent != thisIndex))
-			thisProxy[parent].check(weight);
-		
+	void countScannedVertices() {
 		CmiUInt8 c = (parent == -1 ? 0 : 1);	
 		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
 				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	}
+
+	void verify() {
+		if ((parent != -1) && (parent != thisIndex))
+			thisProxy[parent].check(weight);
 	}
 
 	void check(double w) {
@@ -224,12 +231,11 @@ public:
     CkCallback endCb(CkIndex_TestDriver::foo(), driverProxy);
     aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
 
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::countScannedVertices(), &thishandle);
   }
 
-  void startVerificationPhase() {
-		g.verify();
-		//CkStartQD(CkIndex_TestDriver::done(), &thishandle);
+  void countScannedVertices() {
+		g.countScannedVertices();
   }
 
   void done(CmiUInt8 nScanned) {
@@ -251,11 +257,16 @@ public:
 
 			//print();
 
+			if (opts.verify) {
+				CkPrintf("Run verification...\n");
+				g.verify();
+			}
 			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 		}
   }
 
 	void exit() {
+		CkPrintf("Done. Exit.\n");
 		CkExit();
 	}
 
