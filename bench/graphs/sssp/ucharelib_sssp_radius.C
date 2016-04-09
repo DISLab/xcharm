@@ -2,6 +2,9 @@
 #include <GraphGenerator.h>
 #include <common.h>
 
+#define RADIUS
+#define R 1
+
 struct SSSPEdge {
 	CmiUInt8 v;
 	double w;
@@ -29,19 +32,19 @@ struct SSSPEdge {
 
 #include "ucharelib_sssp_radius.decl.h"
 
-CmiUInt8 N, M;
-int K = 16;
 CProxy_TestDriver driverProxy;
 
 class SSSPVertex : public CBase_uChare_SSSPVertex {
 private:
 	std::vector<SSSPEdge> adjlist;
+	enum State {White, Gray, Black} state;
 	double weight;
 	CmiUInt8 parent;
+	CmiUInt8 totalUpdates;
 
 public:
-  SSSPVertex(const uChareAttr_SSSPVertex & attr) : weight(std::numeric_limits<double>::max()), parent(-1),
- 			CBase_uChare_SSSPVertex(attr)	{
+  SSSPVertex(const uChareAttr_SSSPVertex & attr) : weight(std::numeric_limits<double>::max()), parent(-1), 
+		totalUpdates(0), state(White), CBase_uChare_SSSPVertex(attr)	{
 
     // Contribute to a reduction to signal the end of the setup phase
 		contribute(CkCallback(CkReductionTarget(TestDriver, init), driverProxy));
@@ -57,35 +60,54 @@ public:
 		// broadcast
 		typedef typename std::vector<SSSPEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v]->update(thisIndex, weight + it->w);
+			thisProxy[it->v]->update(thisIndex, weight + it->w, R);
 		}
 	}
 
-  void update(const CmiUInt8 & v, const double & w) {
+	void resume() {
+		state = White;
+		// broadcast
+		typedef typename std::vector<SSSPEdge>::iterator Iterator; 
+		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+			thisProxy[it->v]->update(thisIndex, weight + it->w, R);
+		}
+	}
 
+  void update(const CmiUInt8 & v, const double & w, const int & r) {
 		if (w < weight) {
-			
-			CkPrintf("%lld: %2.2f --> %2.2f, parent %lld\n", thisIndex, weight, w, v);
+			totalUpdates++;
 
+			//CkPrintf("%lld: %2.2f --> %2.2f, parent %lld\n", thisIndex, weight, w, v);
 			// update current weight and parent
 			weight = w;
 			parent = v;
 
-			// broadcast
-			typedef typename std::vector<SSSPEdge>::iterator Iterator; 
-			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-				thisProxy[it->v]->update(thisIndex, weight + it->w);
+			if (r > 0) {
+				// broadcast
+				typedef typename std::vector<SSSPEdge>::iterator Iterator; 
+				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+					thisProxy[it->v]->update(thisIndex, weight + it->w, r - 1);
+				}
+			} else {
+				state = Gray;
+				driverProxy.grayVertexExist();
 			}
 		}
   }
 
-	void verify() {
-		if ((parent != -1) && (parent != thisIndex))
-			thisProxy[parent]->check(weight);
-		
+	void countScannedVertices() {
 		CmiUInt8 c = (parent == -1 ? 0 : 1);	
 		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
 				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	}
+
+	void countTotalUpdates(const CkCallback & cb) {
+		contribute(sizeof(totalUpdates), &totalUpdates, CkReduction::sum_long, cb);
+	}
+
+	void verify() {
+		if ((parent != -1) && (parent != thisIndex))
+			thisProxy[parent]->check(weight);
 	}
 
 	void check(const double & w) {
@@ -99,19 +121,18 @@ private:
 	CmiUInt8 root;
   double starttime;
 	Options opts;
+	bool complete;
 
 	CProxy_GraphGenerator<CProxy_uChare_SSSPVertex, SSSPEdge, Options> generator;
 
 public:
-  TestDriver(CkArgMsg* args) {
+  TestDriver(CkArgMsg* args) : complete(true) {
 		parseCommandOptions(args->argc, args->argv, opts);
-		N = opts.N;
-		M = opts.M;
 		root = opts.root;
     driverProxy = thishandle;
 
     // Create the chares storing vertices
-    g  = CProxy_uChare_SSSPVertex::ckNew(N, CkNumPes());
+    g  = CProxy_uChare_SSSPVertex::ckNew(opts.N, CkNumPes());
 		// create graph generator
 		generator = CProxy_GraphGenerator<CProxy_uChare_SSSPVertex, SSSPEdge, Options>::ckNew(g, opts); 
 
@@ -143,34 +164,54 @@ public:
     CkPrintf("root = %lld\n", root);
     starttime = CkWallTimer();
 		g[root]->make_root();
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
   }
 
-  void startVerificationPhase() {
-		g.verify();
-		//CkStartQD(CkIndex_TestDriver::done(), &thishandle);
+	void resume() {
+		if (!complete) {
+			complete = true;
+			g.resume();
+			CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
+		}
+		else countScannedVertices();
+	}
+
+  void countScannedVertices() {
+		g.countScannedVertices();
   }
 
-  void done(CmiUInt8 globalNubScannedVertices) {
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNubScannedVertices, (double)globalNubScannedVertices*100/N);
-		if (globalNubScannedVertices < 0.25 * N) {
-			//root = rand_64(gen) % N;
-			root = rand() % N;
+	void grayVertexExist() {
+		complete = false;
+	}
+
+  void done(CmiUInt8 nScanned) {
+			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
+		if (nScanned < 0.25 * opts.N) {
+			root = rand() % opts.N;
 			starttime = CkWallTimer();
 			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNubScannedVertices * 1.0/update_walltime;
+			double gteps = 1e-9 * nScanned * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNubScannedVertices, (double)globalNubScannedVertices*100/N);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
-			CkExit();
+			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
+			//				 gteps / CkNumPes());
+
+			if (opts.verify) {
+				CkPrintf("Run verification...\n");
+				g.verify();
+			}
+			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 		}
   }
 
+	void exit() {
+		CkPrintf("Done. Exit.\n");
+		CkExit();
+	}
 
 	void checkErrors() {
 		//g.checkErrors();

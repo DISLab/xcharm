@@ -2,32 +2,33 @@ mainmodule ucharelib_sssp_radius {
 	extern module GraphGenerator;
 	extern module uChareLib;
 
-  // Mean arrity of the graph 
-  readonly int                             K;
-  // Graph size (number of vertices)
-  readonly CmiUInt8                         N;
-  readonly CmiUInt8                         M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
     entry [reductiontarget] void init();
+		entry void startGraphConstruction();
     entry [reductiontarget] void start();
-		entry void startVerificationPhase();
+		entry void countScannedVertices();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+		entry void grayVertexExist();
+		entry void resume();
     //entry void startVerificationPhase();
     //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
     //entry void checkErrors();
-		entry void startGraphConstruction();
+		entry void exit();
   };
 
 	class SSSPEdge; 
   uchare array [1D] SSSPVertex {
     entry SSSPVertex();
 		entry void connectVertex(const SSSPEdge & edge);
-		entry void make_root();
-		entry void update(const CmiUInt8 & v, const double & w); 
+		entry [reentrant] void make_root();
+		entry [reentrant] void update(const CmiUInt8 & v, const double & w, const int & r); 
+		entry [reentrant] void resume();
+		entry void countScannedVertices();
+		//entry void countTotalUpdates(const CkCallback & cb);
 		entry void verify();
 		entry void check(const double & w);
   };

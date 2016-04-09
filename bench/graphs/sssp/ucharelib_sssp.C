@@ -63,7 +63,7 @@ public:
 
 		if (w < weight) {
 			
-			CkPrintf("%lld: %2.2f --> %2.2f, parent %lld\n", thisIndex, weight, w, v);
+			//CkPrintf("%lld: %2.2f --> %2.2f, parent %lld\n", thisIndex, weight, w, v);
 
 			// update current weight and parent
 			weight = w;
@@ -124,8 +124,6 @@ public:
 		CkPrintf("SSSP running...\n");
 		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		;
-		
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 

@@ -21,8 +21,8 @@ mainmodule ucharelib_sssp {
   uchare array [1D] SSSPVertex {
     entry SSSPVertex();
 		entry void connectVertex(const SSSPEdge & edge);
-		entry void make_root();
-		entry void update(const CmiUInt8 & v, const double & w); 
+		entry [reentrant] void make_root();
+		entry [reentrant] void update(const CmiUInt8 & v, const double & w); 
 		entry void verify();
 		entry void check(const double & w);
   };

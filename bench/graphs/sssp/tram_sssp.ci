@@ -15,6 +15,7 @@ mainmodule tram_sssp {
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
 		entry void exit();
 		entry void foo();
+		entry [reductiontarget] void printTotalUpdates(CmiUInt8 nUpdates);
   };
 
 	class SSSPEdge; 
@@ -25,6 +26,7 @@ mainmodule tram_sssp {
 		entry [threaded] void process(const dtype & m); 
 		entry [threaded] void update(const dtype & m); 
 		entry void countScannedVertices();
+		entry void countTotalUpdates(const CkCallback & cb);
 		entry void verify();
 		entry void check(const double & w);
 		entry void print();

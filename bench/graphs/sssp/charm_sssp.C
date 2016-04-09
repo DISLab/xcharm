@@ -1,6 +1,7 @@
 #include <GraphGenerator.h>
 #include <common.h>
 #include <sstream>
+
 #include "charm_sssp.decl.h"
 
 CProxy_TestDriver driverProxy;
@@ -17,14 +18,16 @@ struct SSSPEdge {
 	}
 };
 
+
 class SSSPVertex : public CBase_SSSPVertex {
 private:
 	std::vector<SSSPEdge> adjlist;
 	double weight;
 	CmiUInt8 parent;
+	CmiUInt8 totalUpdates;
 
 public:
-  SSSPVertex() : weight(std::numeric_limits<double>::max()), parent(-1) {
+  SSSPVertex() : weight(std::numeric_limits<double>::max()), parent(-1), totalUpdates(0) {
 
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
@@ -47,8 +50,9 @@ public:
 	}
 
   void update(const CmiUInt8 & v, const double & w) {
-
 		if (w < weight) {
+			//CkPrintf("%d: %2.2f -> %2.2f\n", thisIndex, weight, w);
+			totalUpdates++;
 
 			// update current weight and parent
 			weight = w;
@@ -66,6 +70,10 @@ public:
 		CmiUInt8 c = (parent == -1 ? 0 : 1);	
 		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
 				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	}
+
+	void countTotalUpdates(const CkCallback & cb) {
+		contribute(sizeof(totalUpdates), &totalUpdates, CkReduction::sum_long, cb);
 	}
 
 	void verify() {
@@ -159,6 +167,8 @@ public:
 
 			//g.print();
 
+			g.countTotalUpdates(CkCallback(CkReductionTarget(TestDriver, printTotalUpdates), driverProxy));
+
 			if (opts.verify) {
 				CkPrintf("Run verification...\n");
 				g.verify();
@@ -183,6 +193,10 @@ public:
     //         "passed" : "failed");
     CkExit();
   }
+
+	void printTotalUpdates(CmiUInt8 nUpdates) {
+		CkPrintf("nUpdates = %lld\n", nUpdates);
+	}
 };
 
 #include "charm_sssp.def.h"

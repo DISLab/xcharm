@@ -5,7 +5,7 @@
 #include <sstream>
 
 #define RADIUS
-#define R 4
+#define R 1
 
 typedef struct __dtype {
 	CmiUInt8 v;
@@ -50,9 +50,10 @@ private:
 	std::vector<SSSPEdge> adjlist;
 	double weight;
 	CmiUInt8 parent;
+	CmiUInt8 totalUpdates;
 
 public:
-  SSSPVertex() : weight(std::numeric_limits<double>::max()), parent(-1) {
+  SSSPVertex() : weight(std::numeric_limits<double>::max()), parent(-1), totalUpdates(0) {
 
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
@@ -95,6 +96,7 @@ public:
       * localAggregator = aggregator.ckLocalBranch();
 
 		if (w < weight) {
+			totalUpdates++;
 
 			// update current weight and parent
 			weight = w;
@@ -110,6 +112,7 @@ public:
 					thisProxy[it->v].update(dtype(thisIndex, weight + it->w, R));
 #else
 				localAggregator->insertData(dtype(thisIndex, weight + it->w), it->v);
+				//thisProxy[it->v].update(dtype(thisIndex, weight + it->w));
 #endif
 			}
 		}
@@ -127,6 +130,9 @@ public:
 		//CkPrintf("%d: update called\n", thisIndex);
 
 		if (w < weight) {
+			totalUpdates++;
+
+		//CkPrintf("%d: %2.2f -> %2.2f\n", thisIndex, weight, w);
 			// update current weight and parent
 			weight = w;
 			parent = v;
@@ -151,6 +157,10 @@ public:
 		CmiUInt8 c = (parent == -1 ? 0 : 1);	
 		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
 				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	}
+
+	void countTotalUpdates(const CkCallback & cb) {
+		contribute(sizeof(totalUpdates), &totalUpdates, CkReduction::sum_long, cb);
 	}
 
 	void verify() {
@@ -257,6 +267,8 @@ public:
 
 			//print();
 
+			g.countTotalUpdates(CkCallback(CkReductionTarget(TestDriver, printTotalUpdates), driverProxy));
+
 			if (opts.verify) {
 				CkPrintf("Run verification...\n");
 				g.verify();
@@ -281,6 +293,10 @@ public:
     //         "passed" : "failed");
     CkExit();
   }
+
+	void printTotalUpdates(CmiUInt8 nUpdates) {
+		CkPrintf("nUpdates = %lld\n", nUpdates);
+	}
 
 	void foo() {CkAbort("foo called");}
 };
