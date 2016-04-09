@@ -94,7 +94,7 @@ void ParamList::print(XStr &str,int withDefaultValues,int useConst, int useRef, 
     	param->print(str,withDefaultValues,useConst,useRef);
     	if (next) {
     		str<< delim << " ";
-    		next->print(str,withDefaultValues,useConst,useRef);
+    		next->print(str,withDefaultValues,useConst,useRef, delim);
     	}
 }
 

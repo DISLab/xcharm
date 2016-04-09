@@ -44,6 +44,9 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 		if (!strcmp(argv[i], "--weakscale") || !strcmp(argv[i], "--weak")) {
 			opts.strongscale = false;
 		}
+		if (!strcmp(argv[i], "--verify") || !strcmp(argv[i], "-v")) {
+			opts.verify = true;
+		}
 	}
 
 	if (opts.strongscale)
