@@ -4,6 +4,12 @@
 #include <boost/random/uniform_int.hpp>
 #include <boost/timer/timer.hpp>
 
+inline unsigned int __log2p2(unsigned int n) {
+	int l = 0;
+	while (n >>= 1) l++;
+	return l;
+}
+
 template <class Graph, class Edge, class Opts>
 	class GraphGenerator : public CBase_GraphGenerator<Graph, Edge, Opts> {
 		Graph g;
@@ -26,7 +32,9 @@ template <class Graph, class Edge, class Opts>
 				uint64_t e_start = CkMyPe() * opts.M / CkNumPes(); //world.rank() * (m + world.size() - 1) / world.size(); // FIXME???
 				uint64_t e_count = opts.M / CkNumPes(); //(std::min)((m + world.size() - 1) / world.size(), m - e_start);
 
-				boost::graph500_iterator graph500iter(opts.scale, e_start, a, b);
+				boost::graph500_iterator graph500iter(
+						opts.strongscale == true ? opts.scale : opts.scale + __log2p2(CkNumPes()), 
+						e_start, a, b);
 
 				boost::timer::cpu_times tstart, tend;
 				boost::timer::cpu_timer timer;
