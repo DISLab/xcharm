@@ -20,7 +20,7 @@ mainmodule ucharelib_pagerank {
     entry PageRankVertex();
 		entry void connectVertex(const PageRankEdge & edge);
 		entry void doPageRankStep_init();
-		entry void doPageRankStep_update();
+		entry [reentrant] void doPageRankStep_update();
 		entry void update(const double & r);
 		entry void verify();
 		entry void print();
