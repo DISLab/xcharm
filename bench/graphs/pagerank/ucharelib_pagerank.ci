@@ -2,29 +2,28 @@ mainmodule ucharelib_pagerank {
 	extern module GraphGenerator;
 	extern module uChareLib;
 
+	readonly CmiUInt8 N;
+	readonly double D;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void init();
-    entry [reductiontarget] void start();
-		entry void startVerificationPhase();
-    entry [reductiontarget] void done();
-    //entry void startVerificationPhase();
-    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
-    //entry void checkErrors();
 		entry void startGraphConstruction();
+    entry [threaded] void doPageRank();
+    entry [reductiontarget] void init();
+    entry [reductiontarget] void done();
   };
 
 	class PageRankEdge; 
   uchare array [1D] PageRankVertex {
     entry PageRankVertex();
 		entry void connectVertex(const PageRankEdge & edge);
-		entry [reentrant] void start();
-		entry [reentrant] void update(const CmiUInt8 & c);
+		entry void doPageRankStep_init();
+		entry void doPageRankStep_update();
+		entry void update(const double & r);
 		entry void verify();
-		entry void check(const CmiUInt8 & c);
+		entry void print();
   };
 
 	group GraphGenerator<CProxy_uChare_PageRankVertex, PageRankEdge, Options>;

@@ -1,20 +1,18 @@
-mainmodule tram_pagerank {
+mainmodule charm_pagerank_naive {
 	extern module GraphGenerator;
 
 	readonly CmiUInt8 N;
 	readonly double D;
+  // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
-  // Handle to the communication library (group)
-  readonly CProxy_ArrayMeshStreamer<dtype, int, PageRankVertex,
-                                    SimpleMeshRouter> aggregator;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
 		entry void startGraphConstruction();
     entry [threaded] void doPageRank();
+		entry void startVerificationPhase();
     entry [reductiontarget] void done();
 		entry void exit();
-		entry void foo();
   };
 
 	class PageRankEdge; 
@@ -22,16 +20,11 @@ mainmodule tram_pagerank {
     entry PageRankVertex();
 		entry void connectVertex(const PageRankEdge & edge);
 		entry void doPageRankStep_init();
-		entry [threaded] void doPageRankStep_update();
-		entry void process(const dtype & m); 
+		entry void doPageRankStep_update();
+		entry void update(const double & r);
 		entry void verify();
 		entry void print();
   };
 
 	group GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options>;
-
-  // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
-  group ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
 };

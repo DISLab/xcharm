@@ -1,6 +1,11 @@
-#include <uChareLib.h>
 #include <GraphGenerator.h>
 #include <common.h>
+#include <sstream>
+#include "charm_pagerank_naive.decl.h"
+
+CmiUInt8 N;
+double D;
+CProxy_TestDriver driverProxy;
 
 struct PageRankEdge {
 	CmiUInt8 v;
@@ -10,44 +15,27 @@ struct PageRankEdge {
 	PageRankEdge(CmiUInt8 v, double w) : v(v), w(w) {}
 	void pup(PUP::er &p) { 
 		p | v; 
-		p | w; 
-	}
-	int size() const { 
-		return sizeof(v) + sizeof(w);
-	}
-	static void pack(const PageRankEdge * edge, void * buf) {
-		*(CmiUInt8 *)buf = edge->v;
-		buf = (char *)buf + sizeof(CmiUInt8);
-		*(double *)buf = edge->w;
-	}
-	static void unpack(PageRankEdge * edge, const void * buf) {
-		edge->v = *(CmiUInt8 *)buf;
-		buf = (char *)buf + sizeof(CmiUInt8);
-		edge->w = *(double *)buf;
+		p | w;
 	}
 };
 
-#include "ucharelib_pagerank.decl.h"
-
-CmiUInt8 N;
-double D;
-CProxy_TestDriver driverProxy;
-
-class PageRankVertex : public CBase_uChare_PageRankVertex {
+class PageRankVertex : public CBase_PageRankVertex {
 private:
 	std::vector<PageRankEdge> adjlist;
 	double rankOld, rankNew;
 
 public:
-  PageRankVertex(const uChareAttr_PageRankVertex & attr) : CBase_uChare_PageRankVertex(attr)	{
+  PageRankVertex() {
 		rankNew = 1.0 / N;
     // Contribute to a reduction to signal the end of the setup phase
-		contribute(CkCallback(CkReductionTarget(TestDriver, init), driverProxy));
+    //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
   }
 
 	void connectVertex(const PageRankEdge & edge) {
 		adjlist.push_back(edge);
 	}
+
+  PageRankVertex(CkMigrateMessage *msg) {}
 
 	void doPageRankStep_init() {
 		// set initial page rank values
@@ -59,7 +47,7 @@ public:
 		// broadcast
 		typedef typename std::vector<PageRankEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v]->update(rankOld / adjlist.size());
+			thisProxy[it->v].update(rankOld / adjlist.size());
 		}
 	}
 
@@ -69,6 +57,7 @@ public:
 
 	void verify() {
 		CkAssert((0 < rankNew) && (rankNew < 1));
+		//contribute(CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
 	}
 
 	void print() {
@@ -77,18 +66,18 @@ public:
 		/*for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 			ss << '(' << it->v << ',' << it->w << ')';
 		}*/
-		CkPrintf("%lld: %2.2f, %s\n", thisIndex, rankNew, ss.str().c_str());
+		CkPrintf("%d: %2.2f, %s\n", thisIndex, rankNew, ss.str().c_str());
 	}
 };
 
+
 class TestDriver : public CBase_TestDriver {
 private:
-  CProxy_uChare_PageRankVertex  g;
-	CmiUInt8 root;
+  CProxy_PageRankVertex  g;
   double starttime;
 	Options opts;
 
-	CProxy_GraphGenerator<CProxy_uChare_PageRankVertex, PageRankEdge, Options> generator;
+	CProxy_GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options> generator;
 
 public:
   TestDriver(CkArgMsg* args) {
@@ -98,18 +87,14 @@ public:
 		D = 0.85; 
 
     // Create the chares storing vertices
-    g  = CProxy_uChare_PageRankVertex::ckNew(opts.N, CkNumPes());
+    g  = CProxy_PageRankVertex::ckNew(opts.N);
 		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_uChare_PageRankVertex, PageRankEdge, Options>::ckNew(g, opts); 
+		generator = CProxy_GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options>::ckNew(g, opts); 
 
+    starttime = CkWallTimer();
+		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
     delete args;
   }
-
-	void init() {
-		CkPrintf("TestDriver::init called\n");
-		//TODO: is it possible to move to the Main::Main?
-		g.run(CkCallback(CkIndex_TestDriver::startGraphConstruction(), thisProxy));
-	}
 
   void startGraphConstruction() {
 		CkPrintf("PageRank running...\n");
@@ -122,6 +107,7 @@ public:
 
 		CkStartQD(CkIndex_TestDriver::doPageRank(), &thishandle);
 	}
+
 
   void doPageRank() {
     double update_walltime = CkWallTimer() - starttime;
@@ -143,7 +129,7 @@ public:
   }
 
   void startVerificationPhase() {
-		g.verify();
+		if (opts.verify) g.verify();
 		CkStartQD(CkIndex_TestDriver::done(), &thishandle);
   }
 
@@ -156,21 +142,12 @@ public:
 		//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
 		//		gteps / CkNumPes());
 		//g.print();
+		CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
+	}
+
+	void exit() {
 		CkExit();
 	}
-
-
-	void checkErrors() {
-		//g.checkErrors();
-		//CkStartQD(CkIndex_TestDriver::reportErrors(), &thishandle);
-	}
-
-  void reportErrors(CmiInt8 globalNumErrors) {
-    //CkPrintf("Found %lld errors in %lld locations (%s).\n", globalNumErrors,
-    //         tableSize, globalNumErrors <= 0.01 * tableSize ?
-    //         "passed" : "failed");
-    CkExit();
-  }
 };
 
-#include "ucharelib_pagerank.def.h"
+#include "charm_pagerank_naive.def.h"

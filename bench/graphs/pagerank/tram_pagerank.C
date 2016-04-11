@@ -4,27 +4,18 @@
 #include <common.h>
 #include <sstream>
 
-#define RADIUS
-#define R 100
-
 typedef struct __dtype {
-	CmiUInt8 c;
-#if defined (RADIUS)
-	int r;
-	__dtype (CmiUInt8 c, int r) : c(c), r(r) {}
-#else
-	__dtype (CmiUInt8 c) : c(c) {}
-#endif
-	__dtype() {}
+	double rank;
+	__dtype () {}
+	__dtype (double rank) : rank(rank) {}
 	void pup(PUP::er & p) { 
-		p | c;
-#if defined (RADIUS)
-		p | r;
-#endif
+		p | rank;
 	}
 } dtype;
 #include "tram_pagerank.decl.h"
 
+CmiUInt8 N;
+double D;
 CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, int, PageRankVertex,
                          SimpleMeshRouter> aggregator;
@@ -46,13 +37,13 @@ struct PageRankEdge {
 class PageRankVertex : public CBase_PageRankVertex {
 private:
 	std::vector<PageRankEdge> adjlist;
-	CmiUInt8 componentId;
+	double rankOld, rankNew;
 
 public:
   PageRankVertex() {
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
-		componentId = thisIndex;
+		rankNew = 1.0 / N;
   }
 
 	void connectVertex(const PageRankEdge & edge) {
@@ -61,85 +52,33 @@ public:
 
   PageRankVertex(CkMigrateMessage *msg) {}
 
-	void start() {
+	void doPageRankStep_init() {
+		// set initial page rank values
+		rankOld = rankNew;
+		rankNew = (1.0 - D) / N;
+	}
+
+	void doPageRankStep_update() {
     ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>
       * localAggregator = aggregator.ckLocalBranch();
 		// broadcast
 		typedef typename std::vector<PageRankEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-#if defined (RADIUS)
-			localAggregator->insertData(dtype(componentId, R), it->v);
-#else
-			localAggregator->insertData(dtype(componentId), it->v);
-#endif
+			//thisProxy[it->v].update(rankOld / adjlist.size());
+			localAggregator->insertData(dtype(rankOld / adjlist.size()), it->v);
 		}
 	}
 
 	inline void process(const dtype & m) {
-		const CmiUInt8 & c = m.c;
-#if defined (RADIUS)
-		const int & r = m.r;
-#endif
+		rankNew += D * m.rank;
+	}
 
-    ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>
-      * localAggregator = aggregator.ckLocalBranch();
-
-		if (c < componentId) {
-			// update current weight and parent
-			componentId = c;
-			// broadcast
-			typedef typename std::vector<PageRankEdge>::iterator Iterator; 
-			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-#if defined (RADIUS)
-				if (r > 0 )
-					localAggregator->insertData(dtype(componentId, r - 1), it->v);
-				else
-					thisProxy[it->v].update(dtype(componentId, R));
-#else
-				localAggregator->insertData(dtype(componentId), it->v);
-#endif
-			}
-		}
-  }
-
-	void update(const dtype & m) {
-		const CmiUInt8 & c = m.c;
-#if defined (RADIUS)
-		const int & r = m.r;
-#endif
-    ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>
-      * localAggregator = aggregator.ckLocalBranch();
-
-		if (c < componentId) {
-			// update current weight and parent
-			componentId = c;
-			// broadcast
-			typedef typename std::vector<PageRankEdge>::iterator Iterator; 
-			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-#if defined (RADIUS)
-				if (r > 0 )
-					localAggregator->insertData(dtype(componentId, r - 1), it->v);
-				else
-					thisProxy[it->v].update(dtype(componentId, R));
-#else
-				localAggregator->insertData(dtype(componentId), it->v);
-#endif
-			}
-		}
+  void update(const double & r) {
+		rankNew += D * r;
   }
 
 	void verify() {
-		typedef typename std::vector<PageRankEdge>::iterator Iterator; 
-		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v].check(componentId);
-		}
-		//contribute(CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
-	}
-
-	void check(CmiUInt8 c) {
-		if (componentId != c)
-			CkPrintf("%d: componentId incorrect componentId = %lld, c= %lld\n", thisIndex, componentId, c);
-		//CkAssert(componentId == c);
+		CkAssert((0 < rankNew) && (rankNew < 1));
 	}
 
 	void print() {
@@ -148,7 +87,7 @@ public:
 		/*for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 			ss << '(' << it->v << ',' << it->w << ')';
 		}*/
-		CkPrintf("%d: %lld, %s\n", thisIndex, componentId, ss.str().c_str());
+		CkPrintf("%d: %2.2f, %s\n", thisIndex, rankNew, ss.str().c_str());
 	}
 };
 
@@ -165,6 +104,8 @@ public:
   TestDriver(CkArgMsg* args) {
 		parseCommandOptions(args->argc, args->argv, opts);
     driverProxy = thishandle;
+		N = opts.N;
+		D = 0.85; 
 
     // Create the chares storing vertices
     g  = CProxy_PageRankVertex::ckNew(opts.N);
@@ -192,22 +133,35 @@ public:
 
 		generator.generate();
 
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::doPageRank(), &thishandle);
 	}
 
 
-  void start() {
+  void doPageRank() {
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
     starttime = CkWallTimer();
+		for (int i = 0; i < 10; i++) {
+			CkPrintf("PageRank step %d:\n", i);
+			// do pagerank step initilization
+			g.doPageRankStep_init();
+			// wait for current step to be done 
+			CkStartQD(CkCallbackResumeThread());
+			// do pagerank step 
 
-    CkCallback startCb(CkIndex_PageRankVertex::start(), g);
-    //CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    CkCallback endCb(CkIndex_TestDriver::foo(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+			//g.doPageRankStep_update();
 
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+			CkCallback startCb(CkIndex_PageRankVertex::doPageRankStep_update(), g);
+			//CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+			CkCallback endCb(CkIndex_TestDriver::foo(), driverProxy);
+			aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+
+
+			// wait for current step to be done 
+			CkStartQD(CkCallbackResumeThread());
+		}
+		startVerificationPhase();
   }
 
   void startVerificationPhase() {
@@ -226,6 +180,7 @@ public:
 		//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
 		//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
 		//				 gteps / CkNumPes());
+		//g.print();
 
 		CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 	}
