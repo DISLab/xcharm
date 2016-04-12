@@ -1,0 +1,23 @@
+--- ../charm-6.7.0/bin/charmc	2015-12-22 01:34:13.000000000 +0300
++++ /nethome/sakhoon/fro/charmc	2016-04-12 22:07:25.738559000 +0300
+@@ -32,8 +32,8 @@
+ SAVE=""
+ PURIFY=""
+ SKIPLINK=""
+-OVERRIDE_CC=""
+-OVERRIDE_CXX=""
++OVERRIDE_CC="mpicc -g"
++OVERRIDE_CXX="mpicxx -g"
+ OVERRIDE_F90=""
+ OVERRIDE_LD=""
+ OVERRIDE_LDXX=""
+@@ -1356,7 +1356,8 @@
+ 		NU_OBJ=$BASEO
+ 		;;
+ 	*.C|*.cc|*.cxx|*.cpp|*.c++|*.cu)
+-		Do $CMK_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CXX -c $FILE $DESTO
++#Do $CMK_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CXX -c $FILE $DESTO
++		Do $CMK_CXX $OPTS_CPP $OPTS_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL -c $FILE $DESTO
+ 		NU_OBJ=$BASEO
+ 		if [ "$Do_res" -ne 0 ]
+ 		then
