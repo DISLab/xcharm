@@ -14,7 +14,7 @@ libmoduleuChareLib.a: uChareLib.o
 	ln -sf ../src/libs/ucharelib ../../../include/ucharelib
 
 uChareLib.o: uChareLib.C uChareLib.decl.h 
-	$(CHARMC) -o uChareLib.o -c uChareLib.C -I. -I./NDMeshStreamer $(OPTS)
+	$(CHARMC) -o uChareLib.o -c uChareLib.C -I. -I../../../innovation/NDMeshStreamer $(OPTS)
 
 %.decl.h: %.ci
 	$(CHARMC) $< 
