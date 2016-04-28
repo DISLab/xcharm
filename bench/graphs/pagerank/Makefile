@@ -12,7 +12,7 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = charm_pagerank_naive charm_pagerank_intracount \
+BINARY = charm_pagerank_naive charm_pagerank_intracount charm_pagerank_async \
 				 tram_pagerank ucharelib_pagerank ucharelib_pagerank_radius
 
 all: $(BINARY)
@@ -25,6 +25,11 @@ charm_pagerank_naive.o: charm_pagerank_naive.C charm_pagerank_naive.decl.h charm
 charm_pagerank_intracount: charm_pagerank_intracount.o
 	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
 charm_pagerank_intracount.o: charm_pagerank_intracount.C charm_pagerank_intracount.decl.h charm_pagerank_intracount.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o $@ $<
+
+charm_pagerank_async: charm_pagerank_async.o
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
+charm_pagerank_async.o: charm_pagerank_async.C charm_pagerank_async.decl.h charm_pagerank_async.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o $@ $<
 
 tram_pagerank: tram_pagerank.o
