@@ -17,7 +17,7 @@ CProxy_TestDriver driverProxy;
 //CProxy_ArrayMeshStreamer<dtype, int, Updater,
 //                         SimpleMeshRouter> aggregator;
 // Number of chares per PE
-int numElementsPerPe;
+long long numElementsPerPe;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
 
@@ -32,8 +32,10 @@ private:
 public:
   TestDriver(CkArgMsg* args) {
     N = atoi(args->argv[1]);
-    numElementsPerPe = atoi(args->argv[2]);
+    numElementsPerPe = atoll(args->argv[2]);
     localTableSize = (1l << N) / numElementsPerPe;
+		if (!localTableSize)
+			CkAbort("Table size is too small, or number of chares is too large\n");
     tableSize = localTableSize * CkNumPes() * numElementsPerPe;
 
     CkPrintf("Global table size   = 2^%d * %d = %lld words\n",

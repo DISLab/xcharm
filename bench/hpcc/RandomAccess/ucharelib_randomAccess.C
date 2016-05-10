@@ -20,7 +20,7 @@ CmiInt8 localTableSize;
 CProxy_TestDriver driverProxy;
 
 // Number of uchares per PE
-int numElementsPerPe;
+long long numElementsPerPe;
 
 // Number of chares per PE
 int numChareSetsPerPe;
@@ -39,10 +39,13 @@ private:
 public:
   TestDriver(CkArgMsg* args) {
     N = atoi(args->argv[1]);
-    numElementsPerPe = atoi(args->argv[2]);
+    numElementsPerPe = atoll(args->argv[2]);
 		numChareSetsPerPe = CkNumPes(); //atoi(args->argv[3]);
 
     localTableSize = (1l << N) / numElementsPerPe;
+		if (!localTableSize)
+			CkAbort("Table size is too small, or number of chares is too large\n");
+
     tableSize = localTableSize * CkNumPes() * numElementsPerPe;
 
     CkPrintf("Local table size   = %lld words\n",
@@ -130,7 +133,7 @@ class Updater : public CBase_uChare_Updater {
 
 		// Communication library calls this to deliver each randomly generated key
 		inline void update(const CmiUInt8  &key) {
-			CkPrintf("%lld: update\n", thisIndex);
+			//CkPrintf("%lld: update\n", thisIndex);
 			CmiInt8  localOffset = key & (localTableSize - 1);
 			// Apply update
 			HPCC_Table[localOffset] ^= key;

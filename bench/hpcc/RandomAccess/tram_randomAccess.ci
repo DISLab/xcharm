@@ -10,7 +10,7 @@ mainmodule tram_randomAccess {
   readonly CProxy_ArrayMeshStreamer<dtype, int, Updater,
                                     SimpleMeshRouter> aggregator;
   // Number of chares per PE
-  readonly int            numElementsPerPe;
+  readonly long long            numElementsPerPe;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
