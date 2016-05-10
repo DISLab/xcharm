@@ -6,7 +6,7 @@ mainmodule ucharelib_alltoall {
 	mainchare TestDriver {
 		entry TestDriver(CkArgMsg *m);
 		entry [reductiontarget] void init();
-		entry [reductiontarget] void start();
+		entry void start();
 		entry [reductiontarget] void done();
 	};
 
