@@ -23,6 +23,7 @@ module uChareLib {
 			entry void flush();
 			entry void recvAggregatedMsg(AggregatedMessage *m);
 			//entry void gatherPendingMessagesNum(const CkCallback &cb); 
+			//entry void process(const Message & m);
 		};
 
   //message MeshStreamerMessage<ArrayDataItem<Message, int> >;

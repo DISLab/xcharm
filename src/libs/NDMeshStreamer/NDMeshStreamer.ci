@@ -30,7 +30,7 @@ module NDMeshStreamer {
     entry void init(CkCallback endCb, int prio);
     entry [reductiontarget] void syncInit();
 
-    entry void receiveAtDestination(MeshStreamerMessage<dtype> *msg);
+    entry [threaded] void receiveAtDestination(MeshStreamerMessage<dtype> *msg);
   };
 
   template<class dtype, class ClientType, class RouterType>
