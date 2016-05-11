@@ -17,11 +17,17 @@
 /* #undef FAST_64BIT_ARITHMETIC -- Assume 64-bit arithmetic is slower than 32-bit. */
 
 #include <stdlib.h>
-#include <stdint.h>
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+
+#ifndef __STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS
+#endif
+
+#include <stdint.h>
+
 #include <inttypes.h>
 #include <assert.h>
 

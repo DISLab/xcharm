@@ -29,6 +29,9 @@ class uChare {
 
 	protected:
 		CmiUInt8 thisIndex;
+		//uChareSet<User_uChare, User_uChare_Proxy, User_uChare_Base> &thisProxy;
+		//User_uChare_Proxy &thisProxy;
+
 		uChareSet<User_uChare, User_uChare_Proxy, User_uChare_Base> &thisProxy;
 
 	public:
@@ -71,6 +74,12 @@ class uChare {
 
 		void done(const CkCallback &userCb) {
 			uchareset->done(userCb);
+		}
+
+		uChare<User_uChare, User_uChare_Proxy, User_uChare_Base> & operator= 
+			(const uChare<User_uChare, User_uChare_Proxy, User_uChare_Base> &rhs) {
+			CkAbort("uChare:: operator= called\n");
+			return *this;
 		}
 };
 
@@ -356,6 +365,11 @@ class uChareSet : public CBase_uChareSet<User_uChare, User_uChare_Proxy, User_uC
 
 			void process (const Message &m) {
 				proxy.process(m);
+			}
+
+			uChareSet<User_uChare, User_uChare_Proxy, User_uChare_Base> & operator=
+					(const uChareSet<User_uChare, User_uChare_Proxy, User_uChare_Base> &) {
+				CkAbort("uChareSet:: operator= called\n");
 			}
 };
 
