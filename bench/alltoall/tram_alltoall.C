@@ -4,6 +4,7 @@ typedef CmiUInt8 dtype;
 #include "tram_alltoall.decl.h"
 
 CmiUInt8 N = (1<<12);
+int K = 16;
 
 CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, int, Alltoall, SimpleMeshRouter> aggregator;
@@ -32,6 +33,7 @@ class TestDriver : public CBase_TestDriver {
 		/*entry*/ void init() {
 		  alltoall_array.run();
 			startt = CkWallTimer(); 
+			CkStartQD(CkIndex_TestDriver::done(), &thishandle);
 		}
 		/*entry*/ void done() {
 			CkPrintf("TestDriver::done\n");
@@ -54,13 +56,12 @@ class Alltoall : public CBase_Alltoall {
 		/*entry*/ void run() {
 			ArrayMeshStreamer<dtype, int, Alltoall, SimpleMeshRouter>
 				* localAggregator = aggregator.ckLocalBranch();
-			for (CmiUInt8 i = 0; i < N; i++)
+			for (CmiUInt8 i = 0; i < K; i++)
 				if (i != thisIndex) localAggregator->insertData(0,i); 
 		}
 
 		/*entry*/ void ping() {
-			if (++counter == N)
-				contribute(CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+			counter++;
 			//CkPrintf("%d:counter = %lld, N = %lld\n", thisIndex, counter, N);
 		}
 

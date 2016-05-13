@@ -2,6 +2,7 @@
 #include "ucharelib_alltoall.decl.h"
 
 CmiUInt8 N = (1<<12);
+int K = 16;
 CProxy_TestDriver driverProxy;
 
 class TestDriver : public CBase_TestDriver {
@@ -20,8 +21,10 @@ class TestDriver : public CBase_TestDriver {
 			alltoall_array.run(CkCallback(CkIndex_TestDriver::start(), thisProxy));
 		}
 		/*entry*/ void start() {
+			CkPrintf("TestDriver::start\n");
 		  alltoall_array.start();
 			startt = CkWallTimer(); 
+			CkStartQD(CkIndex_TestDriver::done(), &thishandle);
 		}
 		/*entry*/ void done() {
 			CkPrintf("TestDriver::done\n");
@@ -42,13 +45,12 @@ class Alltoall : public CBase_uChare_Alltoall {
 
 		///*entry*/ void run() {
 		/*entry*/ void start() {
-			for (CmiUInt8 i = 0; i < N; i++)
+			for (CmiUInt8 i = 0; i < K; i++)
 				if (i != thisIndex) thisProxy[i]->ping();
 		}
 
 		/*entry*/ void ping() {
-			if (++counter == N)
-				contribute(CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+			counter++;
 			//CkPrintf("%d:counter = %lld, N = %lld\n", thisIndex, counter, N);
 		}
 };

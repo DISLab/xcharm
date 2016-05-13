@@ -1,6 +1,7 @@
 #include "charm_alltoall.decl.h"
 
 CmiUInt8 N = (1<<12);
+int K = 16;
 
 CProxy_TestDriver driverProxy;
 
@@ -18,6 +19,7 @@ class TestDriver : public CBase_TestDriver {
 		/*entry*/ void init() {
 		  alltoall_array.run();
 			startt = CkWallTimer(); 
+			CkStartQD(CkIndex_TestDriver::done(), &thishandle);
 		}
 		/*entry*/ void done() {
 			CkPrintf("TestDriver::done\n");
@@ -38,13 +40,12 @@ class Alltoall : public CBase_Alltoall {
 		Alltoall(CkMigrateMessage *m){}
 
 		/*entry*/ void run() {
-			for (CmiUInt8 i = 0; i < N; i++)
-				if (i != thisIndex) thisProxy[i].ping();
+			for (CmiUInt8 i = 0; i < K; i++)
+				if (i != thisIndex) thisProxy[rand() % N].ping();
 		}
 
 		/*entry*/ void ping() {
-			if (++counter == N)
-				contribute(CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+			counter++;
 			//CkPrintf("%d:counter = %lld, N = %lld\n", thisIndex, counter, N);
 		}
 };
