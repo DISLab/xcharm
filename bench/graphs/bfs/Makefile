@@ -1,6 +1,6 @@
 include ../../../config.mk
 CHARMXI=../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -O3 -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
+CHARMC_COMPILE_FLAGS= -g -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include $(CFLAGS)
 CHARMC_LINK_FLAGS=-L../../../lib -lGraphGenerator \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
@@ -11,13 +11,18 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = tram_bfs charm_bfs ucharelib_bfs ucharelib_bfs_radius
+BINARY = tram_bfs charm_bfs charm_bfs_sync ucharelib_bfs ucharelib_bfs_radius
 
 all: $(BINARY)
 
 charm_bfs: charm_bfs.o
 	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
 charm_bfs.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o $@ $<
+
+charm_bfs_sync: charm_bfs_sync.o
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
+charm_bfs_sync.o: charm_bfs_sync.C charm_bfs_sync.decl.h charm_bfs_sync.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o $@ $<
 
 tram_bfs: tram_bfs.o
