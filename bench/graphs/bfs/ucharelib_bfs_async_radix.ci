@@ -1,13 +1,16 @@
-mainmodule ucharelib_bfs {
-	extern module GraphGenerator;
+mainmodule ucharelib_bfs_async_radix {
 	extern module uChareLib;
+	extern module GraphGenerator;
 
   // Mean arrity of the graph 
   readonly int                             K;
-  // Graph size (number of vertices)
+  // Graph size (number of vertices and number of edges)
   readonly CmiUInt8                         N;
+	readonly CmiUInt8 												M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
+
+	class BFSVertex_PackedData;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
@@ -15,24 +18,25 @@ mainmodule ucharelib_bfs {
     entry [reductiontarget] void start();
 		entry [reductiontarget] void startGraphConstruction();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+		entry [reductiontarget] void resume();
     entry [reductiontarget] void exit();
-
-		entry [reductiontarget] void testCompletion();
+		entry void grayVertexExist();
   };
 
 	class BFSEdge;
   uchare array [1D] BFSVertex {
     //entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry void update(); 
+		entry [reentrant] void update(int r); 
+		entry [reentrant] void resume();
 		entry void getScannedEdgesNum();
-		entry void verify();
   };
 
 	group GraphGenerator<CProxy_uChare_BFSVertex, BFSEdge, Options>;
 
 //TODO: Can it be hidden?`
 	array [1D] uChareSet<BFSVertex, CProxy_BFSVertex, CBase_BFSVertex>;
+
   // Setup required for the communication library
   message MeshStreamerMessage<ArrayDataItem<Message, int> >;
   group ArrayMeshStreamer<Message, int, 

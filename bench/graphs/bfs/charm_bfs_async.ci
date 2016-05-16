@@ -1,4 +1,4 @@
-mainmodule charm_bfs {
+mainmodule charm_bfs_async {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 

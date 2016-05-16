@@ -1,18 +1,10 @@
-//#define CMK_TRAM_VERBOSE_OUTPUT
-#include "NDMeshStreamer.h"
-#include "GraphGenerator.h"
-#include "common.h"
-
-typedef CmiUInt8 dtype;
-#include "tram_bfs.decl.h"
+#include <GraphGenerator.h>
+#include <common.h>
+#include "charm_bfs_async.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
 CProxy_TestDriver driverProxy;
-CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
-                         SimpleMeshRouter> aggregator;
-// Max number of keys buffered by communication library
-const int numMsgsBuffered = 1024;
 
 struct BFSEdge {
 	CmiUInt8 v;
@@ -33,7 +25,6 @@ private:
 
 public:
   BFSVertex() : visited(false), parent(-1), numScannedEdges(0) {
-
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
   }
@@ -44,35 +35,14 @@ public:
 
   BFSVertex(CkMigrateMessage *msg) {}
 
-  inline void process(const dtype  &parent) {
+  void update() {
 		if (visited)
 			return;
 		//CkPrintf("%d: updated\n", thisIndex);
 		visited = true;
-		this->parent = parent;
-		typedef typename std::vector<BFSEdge>::iterator Iterator; 
-    ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
-      * localAggregator = aggregator.ckLocalBranch();
-
-		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			//thisProxy[*it].update(); 
-      localAggregator->insertData(thisIndex, it->v);
-			numScannedEdges++;
-		}
-		//localAggregator->done();
-  }
-
-  void make_root() {
-		if (visited)
-			return;
-		//CkPrintf("%d: updated\n", thisIndex);
-		visited = true;
-    ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
-      * localAggregator = aggregator.ckLocalBranch();
-
 		typedef typename std::vector<BFSEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-      localAggregator->insertData(thisIndex, it->v);
+			thisProxy[it->v].update();
 			numScannedEdges++;
 		}
   }
@@ -83,6 +53,7 @@ public:
                           driverProxy));
 	}
 };
+
 
 class TestDriver : public CBase_TestDriver {
 private:
@@ -99,22 +70,14 @@ public:
     N = opts.N;
 		M = opts.M;
 		root = opts.root;
-
     driverProxy = thishandle;
 
     // Create the chares storing vertices
-    g   = CProxy_BFSVertex::ckNew(N);
+    g  = CProxy_BFSVertex::ckNew(N);
 		// create graph generator
 		generator = CProxy_GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>::ckNew(g, opts); 
 
-    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
-    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
-
-    // Instantiate communication library group with a handle to the client
-    aggregator =
-      CProxy_ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, g, 1);
-
+    starttime = CkWallTimer();
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
     delete args;
   }
@@ -126,33 +89,18 @@ public:
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
-		// Different mechanisms of graph generation
-		
-		// 1. uchares randomly generate adjlists and connect themselves to peers 
-		//g->createGraph();
-
-		// 2. use graphio lib to load graph (not implemented)
-		//io.loadGraphToChares();
-
-		// 3. generate stream of edges in mainchare and send them to uchares
-		//CProxy_GraphGen generator = CProxy_GraphGen::ckNew(g, scale);
-
 		generator.generate();
 
-		//CkCallback cb(CkIndex_TestDriver::start(), thisProxy);
-		//uchareset_proxy.run(0, cb);
 		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 
 
   void start() {
+    double update_walltime = CkWallTimer() - starttime;
+		CkPrintf("Initializtion completed:\n");
+    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
     starttime = CkWallTimer();
-
-		//g[root].make_root();
-    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
+		g[root].update();
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
@@ -171,7 +119,7 @@ public:
 			double update_walltime = CkWallTimer() - starttime;
 			double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
+			CkPrintf("Scanned edges = %lld (%.0f%%)\n", globalNumScannedEdges, (double)globalNumScannedEdges*100/M);
 			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
 			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
 							 gteps / CkNumPes());
@@ -193,4 +141,4 @@ public:
   }
 };
 
-#include "tram_bfs.def.h"
+#include "charm_bfs_async.def.h"
