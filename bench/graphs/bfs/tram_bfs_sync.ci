@@ -1,13 +1,15 @@
-mainmodule charm_bfs_sync {
+mainmodule tram_bfs_sync {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
   readonly int                             K;
   // Graph size (number of vertices)
-  readonly CmiUInt8                         N;
-  readonly CmiUInt8                         M;
+  readonly CmiUInt8                        N;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
+  // Handle to the communication library (group)
+  readonly CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
+                                    SimpleMeshRouter> aggregator;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
@@ -22,12 +24,16 @@ mainmodule charm_bfs_sync {
   array [1D] BFSVertex {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry void make_root();
-		entry void update(int level, CmiUInt8 parent); 
+		entry void make_root(); 
 		entry void getScannedVertexNum();
 		entry void verify();
 		entry void check(int level);
   };
 
 	group GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>;
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
+  group ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
 };

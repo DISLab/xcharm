@@ -25,7 +25,8 @@ struct BFSEdge {
 
 CmiUInt8 N, M;
 int K = 16;
-int R = 128;
+//int R = 128;
+int R = 64;
 
 CProxy_TestDriver driverProxy;
 
