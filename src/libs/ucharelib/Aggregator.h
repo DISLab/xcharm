@@ -161,7 +161,7 @@ class TramAggregator : public Aggregator {
         yieldCount_ = 0;
         CthYield();
       }
-
+			// get reference to uchare which is addressed
 			User_uChare &uchare = uchareset.uchares[uChareDistribution::getLocaluChareId(m.destination)];
 
 			if (/*!isReentrant &&*/ uchare.isLocked()) {
@@ -169,15 +169,6 @@ class TramAggregator : public Aggregator {
 				// if destination uchare is locked (i.e. is executing entry method
 				// then store this message for further processing
 				delayedMessages.push_back(m);
-
-				/*CkPrintf("[chare=%d,pe=%d]: message to %d delayed, total delayed messages %d\n",
-						uchareset.getId(), uchareset.getPe(), m.destination, delayedMessages.size());*/
-					int delta = 100;
-					if (abs(delayedMessages.size()-oldsize) > delta) {
-						//CkPrintf("[chare=%d,pe=%d]: %d messages, total delayed messages %d (%d)\n",
-						//		uchareset.getId(), uchareset.getPe(), delayedMessages.size()-oldsize, delayedMessages.size(), oldsize);
-						oldsize = delayedMessages.size();
-					}
 			}
 			else {
 				// if destination uchare is unlocked then execute this message immidiately
@@ -194,27 +185,13 @@ class TramAggregator : public Aggregator {
 				User_uChare &uchare = uchareset.uchares[uChareDistribution::getLocaluChareId(m.destination)];
 
 				if (/*isReentrant ||*/ !uchare.isLocked()) {
-
-					/*if (getuChareSet())
-						CkPrintf("[chare=%d,pe=%d]: execute delayed call (delayedMessages.size = %d)\n", 
-								uchareset.getId(), CkMyPe(), delayedMessages.size());*/
 					// erase message afore its been processed
 					delayedMessages.erase(it);
-
-					int delta = 100;
-					if (abs(delayedMessages.size()-oldsize) > delta) {
-						CkPrintf("[chare=%d,pe=%d]: %d messages, total delayed messages %d (%d)\n",
-								uchareset.getId(), uchareset.getPe(), delayedMessages.size()-oldsize, delayedMessages.size(), oldsize);
-						oldsize = delayedMessages.size();
-					}
-
 					if (!isReentrant) uchare.lock();
-
 					// this call can change delayedMessages buffer therefore we can not trust 
 					// it anymore and have to refresh it with begin value
 					(proxy->*unpack_func)(m);
 					it = delayedMessages.begin(); //TODO: ?!
-
 					if (!isReentrant) uchare.unlock();
 				} else
 					it++;

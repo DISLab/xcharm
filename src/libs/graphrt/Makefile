@@ -3,7 +3,6 @@ CHARMXI=../../../bin/charmxi
 CHARMC_COMPILE_FLAGS=-I./include/graph500 -I$(BOOST_ROOT)/include
 CHARMC_LINK_FLAGS=-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono
 
-
 all: libGraphGenerator.a
 	ln -sf ../src/libs/graphrt ../../../include/graphrt
 	cp libGraphGenerator.a ../../../lib

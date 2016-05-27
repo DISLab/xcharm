@@ -5,6 +5,11 @@ class UserMessage {
 	public:
 		void *buf;
 		int size;
+		UserMessage (const UserMessage &m) {
+			size = m.size;
+			buf = malloc(size);
+			memcpy(buf, m.buf, size);
+		}
 		UserMessage(int size) : size(size) {
 			buf = malloc(size);
 		}
@@ -32,6 +37,25 @@ class ArgumentList {
 
 	public:
 		ArgumentList() {}
+
+		~ArgumentList() {
+			typedef std::vector<UserMessage *>::iterator Iterator;
+			for (Iterator i = messageArgs.begin(); i != messageArgs.end(); i++)
+				delete *i;
+		}
+
+		ArgumentList& operator=(const ArgumentList &rhs) {
+			index = rhs.index;
+			intArgs = rhs.intArgs;
+			longlongArgs = rhs.longlongArgs;
+			doubleArgs = rhs.doubleArgs;
+			//typedef std::vector<UserMessage *>::iterator Iterator;
+			//for (Iterator i = rhs.messageArgs.begin(); i != rhs.messageArgs.end(); i++)
+			//	messageArgs.push_back(*i);
+			for (int i = 0; i != rhs.messageArgs.size(); i++)
+				messageArgs.push_back(new UserMessage(*rhs.messageArgs[i]));
+		}
+
 		void push(int arg) {
 			index.push_back(ArgIndex(INT,intArgs.size()));
 			intArgs.push_back(arg);
@@ -275,6 +299,7 @@ public:
 			sizeof(int) + // function id
 			argumentList.size();
 	}
+
 	static int pack(Message *m, void *buf) {
 		char *p = (char *)buf;
 		*(int *)p = m->magic;
@@ -385,5 +410,8 @@ struct AggregatedMessage : public CMessage_AggregatedMessage {
 		}
 };
 
+class FastMessage {
+	PUP::sizer s;
+}; 
 
 #endif

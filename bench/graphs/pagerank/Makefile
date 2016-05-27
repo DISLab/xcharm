@@ -1,14 +1,14 @@
 include ../../../config.mk
 CHARMXI=../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -pg -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
+CHARMC_COMPILE_FLAGS= -O3 -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include
-CHARMC_LINK_FLAGS=-pg -L../../../lib -lGraphGenerator \
+CHARMC_LINK_FLAGS=-O3 -L../../../lib -lGraphGenerator \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
 									-module ampi
 
-XCHARMC_COMPILE_FLAGS=-pg -I. -I../../../include -I../../../include/ucharelib -I../../../include/NDMeshStreamer \
+XCHARMC_COMPILE_FLAGS=-O3 -I. -I../../../include -I../../../include/ucharelib -I../../../include/NDMeshStreamer \
 											$(CHARMC_COMPILE_FLAGS)
-XCHARMC_LINK_FLAGS=-pg -L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
+XCHARMC_LINK_FLAGS=-O3 -L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 

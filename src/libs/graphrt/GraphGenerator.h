@@ -4,6 +4,8 @@
 #include <boost/random/uniform_int.hpp>
 #include <boost/timer/timer.hpp>
 
+#define YIELD_THRASHOLD	1024
+
 inline unsigned int __log2p2(unsigned int n) {
 	int l = 0;
 	while (n >>= 1) l++;
@@ -60,7 +62,9 @@ template <class Graph, class Edge, class Opts>
 									ecounter, (double)(tend.wall - tstart.wall)/1000000000);
 						}
 						thrash+=10;
+
 					}
+
 
 					std::pair<uint64_t,uint64_t> e = graph500iter.dereference();
 					//add_edge(vertex(e.first, g), vertex(e.second, g), g);
@@ -74,6 +78,9 @@ template <class Graph, class Edge, class Opts>
 					g[e.second].connectVertex(Edge(e.first, w));
 #endif
 					graph500iter.increment();
+
+					if (ecounter % YIELD_THRASHOLD)
+						CthYield();
 
 					ecounter++;
 				} 
