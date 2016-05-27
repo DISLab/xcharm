@@ -129,7 +129,7 @@ public:
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
     starttime = CkWallTimer();
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 3; i++) {
 			CkPrintf("PageRank step %d:\n", i);
 			// do pagerank step 
 			g.doPageRankStep();

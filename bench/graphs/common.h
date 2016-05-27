@@ -6,10 +6,11 @@ struct Options {
 	int K;
 	bool strongscale;
 	bool verify;
+	bool freeze;
 	CmiUInt8 N;
 	CmiUInt8 M;
 	CmiUInt8 root;
-	Options() : scale(10), K(16), strongscale(true), verify(false), root(0) {
+	Options() : scale(10), K(16), strongscale(true), verify(false), freeze(false), root(0) {
 		N = (1 << scale);
 		M = N * K;
 	}
@@ -47,6 +48,9 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 		if (!strcmp(argv[i], "--verify") || !strcmp(argv[i], "-v")) {
 			opts.verify = true;
 		}
+		if (!strcmp(argv[i], "--freeze")) {
+			opts.freeze = true;
+		}
 	}
 
 	if (opts.strongscale)
@@ -54,6 +58,8 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 	else
 		opts.N = (1 << opts.scale) * CkNumPes();
 	opts.M = opts.N * opts.K;
+
+	while(opts.freeze) {}
 }
 
 #endif

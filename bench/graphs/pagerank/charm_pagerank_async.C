@@ -62,7 +62,7 @@ public:
 
 		if (sumInPageRankValues[icount].first == adjlist.size()) {
 			rank = (1.0 - D)/N + sumInPageRankValues[icount].second;
-			if (++icount < 10) {
+			if (++icount < 3) {
 				typedef typename std::vector<PageRankEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					thisProxy[it->v].update(icount, rank / adjlist.size());
