@@ -1,7 +1,22 @@
 module GraphGenerator {
+	extern module NDMeshStreamer;
 	template <class Graph, class Edge, class Opts> 
-		group GraphGenerator {
+		group GraphGenerator  {
 			entry GraphGenerator(Graph & g, Opts & opts);
+			//entry void init();
 			entry [threaded] void generate();
-		};
+		};	
+	template <class GraphProxy, class Vertex, class Edge, class Opts, class CProxy_Aggregator> 
+		group GraphGenerator_Aggregator  {
+			entry GraphGenerator_Aggregator(GraphProxy & g, Opts & opts, CProxy_Aggregator & aggregator);
+			//entry void init();
+			entry [threaded] void generate();
+		};	
+
+	/*template <class Graph, class Vertex, class Edge, class Opts> 
+		group GraphGeneratorX : ArrayMeshStreamer<Edge, int, Vertex, SimpleMeshRouter> {
+			entry GraphGeneratorX(Graph & g, Opts & opts);
+			entry void init();
+			entry [threaded] void generate();
+		};*/	
 };
