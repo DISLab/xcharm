@@ -1,6 +1,7 @@
 //#define CMK_TRAM_VERBOSE_OUTPUT
 #include "NDMeshStreamer.h"
-#include <GraphGenerator.h>
+//#include <GraphGenerator.h>
+#include <GraphLib.h>
 #include <common.h>
 #include <sstream>
 
@@ -12,6 +13,16 @@ typedef struct __dtype {
 		p | rank;
 	}
 } dtype;
+
+class PageRankVertex;
+class PageRankEdge;
+class	CProxy_PageRankVertex;
+typedef GraphLib::Graph<
+	PageRankVertex,
+	PageRankEdge,
+	CProxy_PageRankVertex
+	> PageRankGraph;
+
 #include "tram_pagerank.decl.h"
 
 CmiUInt8 N;
@@ -32,6 +43,8 @@ struct PageRankEdge {
 		p | v; 
 		p | w;
 	}
+
+	//PageRankEdge& operator= (const PageRankEdge & e) {}
 };
 
 class PageRankVertex : public CBase_PageRankVertex {
@@ -48,6 +61,10 @@ public:
 
 	void connectVertex(const PageRankEdge & edge) {
 		adjlist.push_back(edge);
+	}
+
+	void process(const PageRankEdge & edge) {
+		connectVertex(edge);
 	}
 
   PageRankVertex(CkMigrateMessage *msg) {}
@@ -91,14 +108,20 @@ public:
 	}
 };
 
-
 class TestDriver : public CBase_TestDriver {
 private:
-  CProxy_PageRankVertex  g;
   double starttime;
 	Options opts;
 
-	CProxy_GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options> generator;
+	PageRankGraph *graph;
+
+	typedef GraphLib::GraphGenerator<
+		PageRankGraph, 
+		Options, 
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		GraphLib::TransportType::/*Tram*/Charm> Generator;
+	Generator *generator;
 
 public:
   TestDriver(CkArgMsg* args) {
@@ -107,10 +130,12 @@ public:
 		N = opts.N;
 		D = 0.85; 
 
-    // Create the chares storing vertices
-    g  = CProxy_PageRankVertex::ckNew(opts.N);
+    // Create graph
+    graph = new PageRankGraph(CProxy_PageRankVertex::ckNew(opts.N));
+    //g  = CProxy_PageRankVertex::ckNew(opts.N);
+
 		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options>::ckNew(g, opts); 
+		generator = new Generator(*graph, opts);
 
     int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
     CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
@@ -118,7 +143,7 @@ public:
     // Instantiate communication library group with a handle to the client
     aggregator =
       CProxy_ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, g, 1);
+      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
 
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
     delete args;
@@ -131,13 +156,14 @@ public:
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
-		generator.generate();
+		generator->generate();
 
 		CkStartQD(CkIndex_TestDriver::doPageRank(), &thishandle);
 	}
 
 
   void doPageRank() {
+		PageRankGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
@@ -157,7 +183,6 @@ public:
 			CkCallback endCb(CkIndex_TestDriver::foo(), driverProxy);
 			aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
 
-
 			// wait for current step to be done 
 			CkStartQD(CkCallbackResumeThread());
 		}
@@ -165,6 +190,7 @@ public:
   }
 
   void startVerificationPhase() {
+		PageRankGraph::Proxy & g = graph->getProxy();
 		//aggregator.finish();
 		//aggregator.syncInit();
 		//aggregator.flushToIntermediateDestinations();
