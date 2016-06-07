@@ -1,0 +1,11 @@
+module GraphLib {
+
+	namespace GraphLib {
+	template <typename E>
+		array [1D] Vertex {
+			entry Vertex();
+			entry void addEdge(const E & e);
+			//entry void recv();
+		};
+	}
+};
