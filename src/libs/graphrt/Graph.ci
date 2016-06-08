@@ -1,11 +1,13 @@
-module GraphLib {
+module Graph {
+	extern module GraphGenerator; 
 
 	namespace GraphLib {
-	template <typename E>
+	template <typename V, typename E, TransportType transportType>
 		array [1D] Vertex {
 			entry Vertex();
+			entry void connectVertex(const E & e);
 			entry void addEdge(const E & e);
-			//entry void recv();
+			template <typename M> entry void recv(const M & m);
 		};
 	}
 };

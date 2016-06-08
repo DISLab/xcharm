@@ -2,3 +2,5 @@
 #include "DataTypes.h"
 #include "GraphGenerator.decl.h"
 #include "GraphGenerator.def.h"
+#include "Graph.decl.h"
+#include "Graph.def.h"

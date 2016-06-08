@@ -1,16 +1,53 @@
 #ifndef __Graph_h__ 
 #define __Graph_h__
-#include "GraphLib.decl.h"
+#include "DataTypes.h"
+#include "Graph.decl.h"
 
 namespace GraphLib {
-	template <typename E>
-		class Vertex : public CBase_Vertex {
-			private:
+	typedef CmiUInt8 VertexId;
+	struct Edge {
+		VertexId v;
+	};
+
+	template <typename V, typename E, TransportType transportType>
+		class Vertex;
+
+	template <typename V, typename E>
+		class Vertex<V, E, TransportType::Charm> : public CBase_Vertex<V, E, TransportType::Charm>	{
+			public:
+				//typedef V Vertex; 
+				typedef E Edge; 
+
+			protected:
 				std::vector<E> edges;
+
 			public:
 				Vertex() {}
-				void addEdge(const E & e) { edges.push_back(e); }
+				Vertex(CkMigrateMessage *m) {}
+				void connectVertex(const E & e) { 
+					edges.push_back(e); 
+				}
+				void addEdge(const E & e) { 
+					edges.push_back(e); 
+				}
+				inline const int getEdgeNumber() { return edges.size(); }
+				template <typename M> void sendMessage(M & m, VertexId v) {
+					this->thisProxy[v].recv(m);
+				}
+				template <typename M> void sendMessage(const M & m, VertexId v) {
+					this->thisProxy[v].recv(m);
+				}
+				template <typename M> void recv(const M & m) {
+					static_cast<V *>(this)->process(m);
+				}
 		};
+
+#define FORALL_ADJ_EDGES(e, V) \
+for(std::vector<V::Edge>::iterator i = edges.begin(); \
+		i != edges.end() ? (e = *i, true) : false; i++)
+#define FORALL_ADJ_VERTICES(v, V) \
+for(std::vector<V::Edge>::iterator i = edges.begin(); \
+		i != edges.end() ? (v = i->v, true) : false; i++)
 
 	template <typename V, typename E, typename CProxy_Vertex>
 		class Graph {
@@ -31,7 +68,7 @@ namespace GraphLib {
 }
 
 #define CK_TEMPLATES_ONLY
-#include "GraphLib.def.h"
+#include "Graph.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #endif
