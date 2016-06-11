@@ -43,8 +43,6 @@ struct PageRankEdge {
 		p | v; 
 		p | w;
 	}
-
-	//PageRankEdge& operator= (const PageRankEdge & e) {}
 };
 
 class PageRankVertex : public CBase_PageRankVertex {
@@ -168,7 +166,7 @@ public:
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
     starttime = CkWallTimer();
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 10; i++) {
 			CkPrintf("PageRank step %d:\n", i);
 			// do pagerank step initilization
 			g.doPageRankStep_init();
