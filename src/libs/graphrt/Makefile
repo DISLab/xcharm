@@ -15,6 +15,7 @@ Graph.o: Graph.C Graph.decl.h Graph.def.h GraphGenerator.decl.h GraphGenerator.d
 
 %.def.h %.decl.h: %.ci
 	$(CHARMXI) $<
+#  sed -i 's/impl_obj->template/impl_obj->/g' $(basename $<).decl.h $(basename $<).def.h
 
 clean: 
 	rm -f libGraph.a

@@ -1,13 +1,23 @@
 module Graph {
 	extern module GraphGenerator; 
-
+	extern module NDMeshStreamer; 
 	namespace GraphLib {
+
+	//template <typename X, typename Y>
+	//	array [1D] A {};
+	//template <typename X>
+	//	array [1D] A<X,int> {};
+
 	template <typename V, typename E, TransportType transportType>
 		array [1D] Vertex {
+			//include "vertex.h"
 			entry Vertex();
 			entry void connectVertex(const E & e);
 			entry void addEdge(const E & e);
+			template <typename M> entry void init(const CProxy_ArrayMeshStreamer<M, int, V, SimpleMeshRouter> & aggregator);
+			//		CProxy_Aggregator<M> & aggregator);
 			template <typename M> entry void recv(const M & m);
+			entry void foo();
 		};
 	}
 };
