@@ -3,75 +3,20 @@
 #include "DataTypes.h"
 #include "NDMeshStreamer.h"
 #include "Graph.decl.h"
+#include "Vertex.h"
 #include "Transport.h"
 
 namespace GraphLib {
-	struct Edge {
-		VertexId v;
-	};
 
-	template <typename V, typename E, TransportType transportType>
-		class Vertex :  public CBase_Vertex<V, E, transportType>	{
-			public:
-				//typedef V Vertex; 
-				typedef E Edge; 
-				typedef CProxy_Vertex<V, E, transportType> CProxy_V;
-				typedef CkIndex_Vertex<V, E, transportType> CkIndex_V;
-				template <typename dtype>
-					using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, int, V, SimpleMeshRouter>; 
-
-			protected:
-				std::vector<E> edges;
-				Transport<V, CProxy_V, transportType> transport;
-
-			public:
-				Vertex() : transport(this->thisProxy) {
-					__register();
-				}
-				Vertex(CkMigrateMessage *m) {}
-
-				void __register() {
-					CkIndex_V::template idx_init_marshall4<int>();
-					CkIndex_V::template idx_init_marshall4<long>();
-					CkIndex_V::template idx_init_marshall4<double>();
-					CkIndex_V::template idx_init_marshall4<char>();
-				}
-
-				// only for Tram transport
-				template <typename M> void init(const CProxy_Aggregator<M> & aggregator) {
-					transport.init(aggregator);
-				}
-
-				void connectVertex(const E & e) { 
-					edges.push_back(e); 
-				}
-				void addEdge(const E & e) { 
-					edges.push_back(e); 
-				}
-				inline const int getEdgeNumber() { return edges.size(); }
-				template <typename M> void sendMessage(M & m, VertexId v) {
-					transport.sendMessage(m, v);
-				}
-				template <typename M> void sendMessage(/*const M &*/M m, VertexId v) {
-					transport.sendMessage(m, v);
-				}
-				template <typename M> void recv(const M & m) {
-					//transport.recv(m);
-					static_cast<V *>(this)->process(m);
-				}
-				void foo() {CkPrintf("Foooo\n");}
-		};
-
-#define FORALL_ADJ_EDGES(e, V) \
-for(std::vector<V::Edge>::iterator i = edges.begin(); \
-		i != edges.end() ? (e = *i, true) : false; i++)
-#define FORALL_ADJ_VERTICES(v, V) \
-for(std::vector<V::Edge>::iterator i = edges.begin(); \
-		i != edges.end() ? (v = i->v, true) : false; i++)
-
+	/**
+	 * Graph template class
+	 **/
 	template <typename V, typename E, typename CProxy_Vertex, TransportType transportType>
 		class Graph;
 
+	/**
+	 * Partial Graph template specialization for Charm transport
+	 **/
 	template <typename V, typename E, typename CProxy_Vertex>
 		class Graph<V, E, CProxy_Vertex, TransportType::Charm> {
 			public:
@@ -83,6 +28,7 @@ for(std::vector<V::Edge>::iterator i = edges.begin(); \
 			public:
 				Graph() {}
 				Graph(CmiUInt8 N) {
+					// create chare array for Graph vertices
 					g = CProxy_Vertex::ckNew(N);
 				}
 				Graph(CProxy_Vertex g) : g(g) {}
@@ -92,6 +38,9 @@ for(std::vector<V::Edge>::iterator i = edges.begin(); \
 				}
 		};
 
+	/**
+	 * Partial Graph template specialization for Tram transport
+	 **/
 	template <typename V, typename E, typename CProxy_Vertex>
 		class Graph<V, E, CProxy_Vertex, TransportType::Tram> {
 			public:
@@ -105,6 +54,7 @@ for(std::vector<V::Edge>::iterator i = edges.begin(); \
 			public:
 				Graph() {}
 				Graph(CmiUInt8 N) {
+					// create chare array for Graph vertices
 					graphProxy = CProxy_Vertex::ckNew(N);
 
 					// register all possible aggregators
@@ -113,8 +63,6 @@ for(std::vector<V::Edge>::iterator i = edges.begin(); \
 					registerAggregator<double>();
 					registerAggregator<char>();
 					//..
-
-					//FIXME::
 				}
 				Graph(CProxy_Vertex graphProxy) : graphProxy(graphProxy) {}
 				CProxy_Vertex & getProxy() { return graphProxy; }

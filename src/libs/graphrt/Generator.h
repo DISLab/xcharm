@@ -3,9 +3,9 @@
 
 #include "DataTypes.h"
 
-namespace GraphLib {
-
 #define YIELD_THRASHOLD	1024
+
+namespace GraphLib {
 
 	inline unsigned int __log2p2(unsigned int n) {
 		int l = 0;
@@ -13,9 +13,15 @@ namespace GraphLib {
 		return l;
 	}
 
+	/**
+	 * Graph template class
+	 **/
 	template <class Graph, class Opts, GraphGeneratorType graphGeneratorType>
 		class Generator;
 
+	/**
+	 * Kronecker graph generator
+	 **/
 	template <class Graph, class Opts>
 		class Generator<Graph, Opts, GraphGeneratorType::Kronecker> {
 			protected:
@@ -39,8 +45,10 @@ namespace GraphLib {
 			uint64_t a = rand_64(gen);
 			uint64_t b = rand_64(gen);
 
-			uint64_t e_start = CkMyPe() * opts.M / CkNumPes(); //world.rank() * (m + world.size() - 1) / world.size(); // FIXME???
-			uint64_t e_count = opts.M / CkNumPes(); //(std::min)((m + world.size() - 1) / world.size(), m - e_start);
+			uint64_t e_start = CkMyPe() * opts.M / CkNumPes(); 
+				//world.rank() * (m + world.size() - 1) / world.size(); // FIXME???
+			uint64_t e_count = opts.M / CkNumPes(); 
+				//(std::min)((m + world.size() - 1) / world.size(), m - e_start);
 
 			boost::graph500_iterator graph500iter(
 					opts.strongscale == true ? opts.scale : opts.scale + __log2p2(CkNumPes()), 
