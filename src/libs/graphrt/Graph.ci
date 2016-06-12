@@ -4,13 +4,16 @@ module Graph {
 	include "DataTypes.h";
 
 	namespace GraphLib {
+		// TODO: no partial specialization in charmxi :(
 		template <typename V, typename E, TransportType transportType>
 			array [1D] Vertex {
 				entry Vertex();
+				// only for transportType == Charm
 				entry void connectVertex(const E & e);
 				entry void addEdge(const E & e);
-				template <typename M> entry void init(const CProxy_ArrayMeshStreamer<M, int, V, SimpleMeshRouter> & aggregator);
 				template <typename M> entry void recv(const M & m);
+				// only for transportType == Tram
+				template <typename M> entry void init(const CProxy_ArrayMeshStreamer<M, int, V, SimpleMeshRouter> & aggregator);
 			};
 	}
 };

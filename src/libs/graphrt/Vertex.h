@@ -38,16 +38,16 @@ namespace GraphLib {
 				}
 				Vertex(CkMigrateMessage *m) {}
 
-				void __register() {
-					CkIndex_V::template idx_init_marshall4<int>();
-					CkIndex_V::template idx_init_marshall4<long>();
-					CkIndex_V::template idx_init_marshall4<double>();
-					CkIndex_V::template idx_init_marshall4<char>();
-				}
+				void __register();
 
 				// only for Tram transport
 				template <typename M> void init(const CProxy_Aggregator<M> & aggregator) {
 					transport.init(aggregator);
+				}
+
+				// adds edge to the vertex (for Tram transport)
+				void process(const E & e) { 
+					addEdge(e); 
 				}
 
 				// adds edge to the vertex
@@ -78,6 +78,22 @@ namespace GraphLib {
 					static_cast<V *>(this)->process(m);
 				}
 		};
+
+	//template <typename V, typename E>
+	//	void Vertex<V, E, TransportType::Charm>::__register() {}
+
+	template <typename V, typename E, TransportType t>
+		void Vertex<V, E, t/*TransportType::Tram*/>::__register() {
+			CkIndex_V::template idx_init_marshall5<int>();
+			CkIndex_V::template idx_init_marshall5<long>();
+			CkIndex_V::template idx_init_marshall5<double>();
+			CkIndex_V::template idx_init_marshall5<char>();
+		}
+
+// TODO: need to make two specializations of init method (for Charm and Tram cases)
+//	template <typename V, typename E>
+//	template <typename M> 
+//		void Vertex<V, E, TransportType::Charm>::init(const Vertex<V, E, TransportType::Charm>::CProxy_Aggregator<M> & aggregator) {}
 
 // vertex adn edge iterators
 #define FORALL_ADJ_EDGES(e, V) \
