@@ -20,7 +20,8 @@ class	CProxy_PageRankVertex;
 typedef GraphLib::Graph<
 	PageRankVertex,
 	PageRankEdge,
-	CProxy_PageRankVertex
+	CProxy_PageRankVertex,
+	GraphLib::TransportType::/*Tram*/Charm
 	> PageRankGraph;
 
 #include "tram_pagerank.decl.h"

@@ -1,12 +1,12 @@
-include ../../../config.mk
-CHARMXI=../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -g -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
+include ../../../../config.mk
+CHARMXI=../../../../bin/charmxi
+CHARMC_COMPILE_FLAGS= -g -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include
-CHARMC_LINK_FLAGS=-g -L../../../lib -lGraphGenerator \
+CHARMC_LINK_FLAGS=-g -L../../../../lib -lGraphGenerator \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
 									-module ampi
 
-XCHARMC_COMPILE_FLAGS=-g -I. -I../../../include -I../../../include/ucharelib -I../../../include/NDMeshStreamer \
+XCHARMC_COMPILE_FLAGS=-g -I. -I../../../../include -I../../../../include/ucharelib -I../../../../include/NDMeshStreamer \
 											$(CHARMC_COMPILE_FLAGS)
 XCHARMC_LINK_FLAGS=-g -L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
@@ -30,6 +30,11 @@ charm_pagerank_intracount.o: charm_pagerank_intracount.C charm_pagerank_intracou
 charm_pagerank_async: charm_pagerank_async.o
 	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
 charm_pagerank_async.o: charm_pagerank_async.C charm_pagerank_async.decl.h charm_pagerank_async.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o $@ $<
+
+charm_pagerank_async2: charm_pagerank_async2.o
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
+charm_pagerank_async2.o: charm_pagerank_async2.C charm_pagerank_async.decl.h charm_pagerank_async.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o $@ $<
 
 tram_pagerank: tram_pagerank.o

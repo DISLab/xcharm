@@ -1,6 +1,17 @@
-#include <GraphGenerator.h>
+#include <GraphLib.h>
 #include <common.h>
 #include <sstream>
+
+class PageRankVertex;
+class PageRankEdge;
+class	CProxy_PageRankVertex;
+typedef GraphLib::Graph<
+	PageRankVertex,
+	PageRankEdge,
+	CProxy_PageRankVertex,
+	GraphLib::TransportType::/*Tram*/Charm
+	> PageRankGraph;
+
 #include "charm_pagerank_naive.decl.h"
 
 CmiUInt8 N;
@@ -30,12 +41,15 @@ public:
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
   }
+  PageRankVertex(CkMigrateMessage *msg) {}
 
 	void connectVertex(const PageRankEdge & edge) {
 		adjlist.push_back(edge);
 	}
 
-  PageRankVertex(CkMigrateMessage *msg) {}
+	void process(const PageRankEdge & edge) {
+		connectVertex(edge);
+	}
 
 	void doPageRankStep_init() {
 		// set initial page rank values
@@ -73,11 +87,17 @@ public:
 
 class TestDriver : public CBase_TestDriver {
 private:
-  CProxy_PageRankVertex  g;
   double starttime;
 	Options opts;
 
-	CProxy_GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options> generator;
+	PageRankGraph *graph;
+	typedef GraphLib::GraphGenerator<
+		PageRankGraph, 
+		Options, 
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		GraphLib::TransportType::/*Tram*/Charm> Generator;
+	Generator *generator;
 
 public:
   TestDriver(CkArgMsg* args) {
@@ -86,10 +106,10 @@ public:
 		N = opts.N;
 		D = 0.85; 
 
-    // Create the chares storing vertices
-    g  = CProxy_PageRankVertex::ckNew(opts.N);
+    // Create graph
+    graph = new PageRankGraph(CProxy_PageRankVertex::ckNew(opts.N));
 		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_PageRankVertex, PageRankEdge, Options>::ckNew(g, opts); 
+		generator = new Generator(*graph, opts);
 
     starttime = CkWallTimer();
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
@@ -103,13 +123,14 @@ public:
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
-		generator.generate();
+		generator->generate();
 
 		CkStartQD(CkIndex_TestDriver::doPageRank(), &thishandle);
 	}
 
 
   void doPageRank() {
+		PageRankGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
@@ -129,6 +150,7 @@ public:
   }
 
   void startVerificationPhase() {
+		PageRankGraph::Proxy & g = graph->getProxy();
 		if (opts.verify) g.verify();
 		CkStartQD(CkIndex_TestDriver::done(), &thishandle);
   }
