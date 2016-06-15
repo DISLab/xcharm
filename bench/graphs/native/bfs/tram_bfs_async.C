@@ -1,9 +1,20 @@
 //#define CMK_TRAM_VERBOSE_OUTPUT
 #include "NDMeshStreamer.h"
-#include "GraphGenerator.h"
+#include "GraphLib.h"
 #include "common.h"
 
 typedef CmiUInt8 dtype;
+
+class BFSVertex;
+class BFSEdge;
+class	CProxy_BFSVertex;
+typedef GraphLib::Graph<
+	BFSVertex,
+	BFSEdge,
+	CProxy_BFSVertex,
+	GraphLib::TransportType::/*Tram*/Charm
+	> BFSGraph;
+
 #include "tram_bfs_async.decl.h"
 
 CmiUInt8 N, M;
@@ -37,6 +48,10 @@ public:
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
   }
+
+	void process(const BFSEdge & edge) {
+		connectVertex(edge);
+	}
 
 	void connectVertex(const BFSEdge & edge) {
 		adjlist.push_back(edge);
@@ -86,12 +101,18 @@ public:
 
 class TestDriver : public CBase_TestDriver {
 private:
-  CProxy_BFSVertex  g;
 	CmiUInt8 root;
   double starttime;
 	Options opts;
 
-	CProxy_GraphGenerator<CProxy_BFSVertex, BFSEdge, Options> generator;
+	BFSGraph *graph;
+	typedef GraphLib::GraphGenerator<
+		BFSGraph, 
+		Options, 
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		GraphLib::TransportType::/*Tram*/Charm> Generator;
+	Generator *generator;
 
 public:
   TestDriver(CkArgMsg* args) {
@@ -102,10 +123,10 @@ public:
 
     driverProxy = thishandle;
 
-    // Create the chares storing vertices
-    g   = CProxy_BFSVertex::ckNew(N);
+    // Create graph
+    graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
 		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>::ckNew(g, opts); 
+		generator = new Generator(*graph, opts);
 
     int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
     CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
@@ -113,7 +134,7 @@ public:
     // Instantiate communication library group with a handle to the client
     aggregator =
       CProxy_ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, g, 1);
+      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
 
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
     delete args;
@@ -137,7 +158,7 @@ public:
 		// 3. generate stream of edges in mainchare and send them to uchares
 		//CProxy_GraphGen generator = CProxy_GraphGen::ckNew(g, scale);
 
-		generator.generate();
+		generator->generate();
 
 		//CkCallback cb(CkIndex_TestDriver::start(), thisProxy);
 		//uchareset_proxy.run(0, cb);
@@ -146,6 +167,7 @@ public:
 
 
   void start() {
+		BFSGraph::Proxy & g = graph->getProxy();
     starttime = CkWallTimer();
 
 		//g[root].make_root();
@@ -157,6 +179,7 @@ public:
   }
 
   void startVerificationPhase() {
+		BFSGraph::Proxy & g = graph->getProxy();
 		g.getScannedEdgesNum();
   }
 
@@ -177,19 +200,6 @@ public:
 							 gteps / CkNumPes());
 			CkExit();
 		}
-  }
-
-
-	void checkErrors() {
-		//g.checkErrors();
-		//CkStartQD(CkIndex_TestDriver::reportErrors(), &thishandle);
-	}
-
-  void reportErrors(CmiInt8 globalNumErrors) {
-    //CkPrintf("Found %lld errors in %lld locations (%s).\n", globalNumErrors,
-    //         tableSize, globalNumErrors <= 0.01 * tableSize ?
-    //         "passed" : "failed");
-    CkExit();
   }
 };
 

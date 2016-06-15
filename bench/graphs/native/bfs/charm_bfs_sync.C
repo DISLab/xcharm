@@ -1,5 +1,15 @@
-#include <GraphGenerator.h>
+#include <GraphLib.h>
 #include <common.h>
+
+class BFSVertex;
+class BFSEdge;
+class	CProxy_BFSVertex;
+typedef GraphLib::Graph<
+	BFSVertex,
+	BFSEdge,
+	CProxy_BFSVertex,
+	GraphLib::TransportType::/*Tram*/Charm
+	> BFSGraph;
 #include "charm_bfs_sync.decl.h"
 
 CmiUInt8 N, M;
@@ -30,6 +40,10 @@ public:
 
 	void connectVertex(const BFSEdge & edge) {
 		adjlist.push_back(edge);
+	}
+
+	void process(const BFSEdge & edge) {
+		connectVertex(edge);
 	}
 
   BFSVertex(CkMigrateMessage *msg) {}
@@ -75,12 +89,18 @@ public:
 
 class TestDriver : public CBase_TestDriver {
 private:
-  CProxy_BFSVertex  g;
 	CmiUInt8 root;
   double starttime;
 	Options opts;
 
-	CProxy_GraphGenerator<CProxy_BFSVertex, BFSEdge, Options> generator;
+	BFSGraph *graph;
+	typedef GraphLib::GraphGenerator<
+		BFSGraph, 
+		Options, 
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		GraphLib::TransportType::/*Tram*/Charm> Generator;
+	Generator *generator;
 
 public:
   TestDriver(CkArgMsg* args) {
@@ -91,9 +111,10 @@ public:
     driverProxy = thishandle;
 
     // Create the chares storing vertices
-    g  = CProxy_BFSVertex::ckNew(N);
+    // Create graph
+    graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
 		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>::ckNew(g, opts); 
+		generator = new Generator(*graph, opts);
 
     starttime = CkWallTimer();
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
@@ -107,13 +128,14 @@ public:
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
-		generator.generate();
+		generator->generate();
 
 		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 
 
   void start() {
+		BFSGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
@@ -124,10 +146,12 @@ public:
   }
 
   void startVerificationPhase() {
+		BFSGraph::Proxy & g = graph->getProxy();
 		g.getScannedVertexNum();
   }
 
   void done(CmiUInt8 globalNumScannedVertices) {
+		BFSGraph::Proxy & g = graph->getProxy();
 		CkPrintf("globalNumScannedVertices = %lld\n", globalNumScannedVertices);
 		if (globalNumScannedVertices < 0.25 * N) {
 			//root = rand_64(gen) % N;

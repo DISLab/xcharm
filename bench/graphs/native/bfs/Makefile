@@ -1,8 +1,8 @@
-include ../../../config.mk
-CHARMXI=../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -g -I./.tmp -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
+include ../../../../config.mk
+CHARMXI=../../../../bin/charmxi
+CHARMC_COMPILE_FLAGS= -g -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include $(CFLAGS)
-CHARMC_LINK_FLAGS=-L./.tmp -L../../../lib -lGraphGenerator \
+CHARMC_LINK_FLAGS=-L./.tmp -L../../../../lib -lGraphGenerator \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
 									-module ampi
 XCHARMC_COMPILE_FLAGS=-I. -I../../../include -I../../../include/ucharelib -I../../../include/NDMeshStreamer \
@@ -11,8 +11,8 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = charm_bfs_async charm_bfs_sync tram_bfs_async tram_bfs_sync \
-				 ucharelib_bfs_async ucharelib_bfs_async_radix
+BINARY = charm_bfs_async charm_bfs_sync tram_bfs_async tram_bfs_sync 
+#				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
 all: dir $(BINARY)
 
@@ -47,7 +47,10 @@ ucharelib_bfs_async_radix.o: ucharelib_bfs_async_radix.C ucharelib_bfs_async_rad
 	$(CHARMC) $(XCHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 %.def.h %.decl.h: %.ci
-	$(CHARMXI) $< && mv *.decl.h .tmp && mv *.def.h .tmp
+	$(CHARMXI) $<
+	sed -i 's/CkIndex_GraphLib__/GraphLib::CkIndex_/g' $(basename $<).decl.h $(basename $<).def.h
+	sed -i 's/GraphLib__/GraphLib::/g' $(basename $<).decl.h $(basename $<).def.h
+	mv *.decl.h .tmp && mv *.def.h .tmp
 
 clean: 
 	rm -f $(BINARY)

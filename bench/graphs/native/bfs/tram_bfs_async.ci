@@ -30,10 +30,24 @@ mainmodule tram_bfs_async {
 		entry void getScannedEdgesNum();
   };
 
-	group GraphGenerator<CProxy_BFSVertex, BFSEdge, Options>;
-
   // Setup required for the communication library
   message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
   group ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>;
   group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
+
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<BFSEdge, int> >;
+  group ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<BFSEdge, int>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<BFSGraph, Options,		
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<BFSGraph, Options,		
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
 };
