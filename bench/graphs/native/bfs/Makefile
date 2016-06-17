@@ -12,7 +12,7 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 $(CHARMC_LINK_FLAGS)
 
 BINARY = charm_bfs_async charm_bfs_sync charm_bfs_async_radix charm_bfs_sync_radix\
-				 tram_bfs_async tram_bfs_sync 
+				 tram_bfs_async tram_bfs_sync tram_bfs_async_radix tram_bfs_sync_sync 
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
 all: dir $(BINARY)
@@ -45,6 +45,16 @@ tram_bfs_async.o: tram_bfs_async.C tram_bfs_async.decl.h tram_bfs_async.def.h
 tram_bfs_sync: tram_bfs_sync.o
 	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 tram_bfs_sync.o: tram_bfs_sync.C tram_bfs_sync.decl.h tram_bfs_sync.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
+
+tram_bfs_async_radix: tram_bfs_async_radix.o
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
+tram_bfs_async_radix.o: tram_bfs_async_radix.C tram_bfs_async_radix.decl.h tram_bfs_async_radix.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
+
+tram_bfs_sync_radix: tram_bfs_sync_radix.o
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
+tram_bfs_sync_radix.o: tram_bfs_sync_radix.C tram_bfs_sync_radix.decl.h tram_bfs_sync_radix.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 ucharelib_bfs_async: ucharelib_bfs_async.o 
