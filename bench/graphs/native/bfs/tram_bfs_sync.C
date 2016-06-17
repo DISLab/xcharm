@@ -121,7 +121,7 @@ private:
 		Options, 
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::/*Tram*/Charm> Generator;
+		GraphLib::TransportType::Tram> Generator;
 	Generator *generator;
 
 public:
