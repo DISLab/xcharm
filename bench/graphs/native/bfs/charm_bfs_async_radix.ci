@@ -1,0 +1,48 @@
+mainmodule charm_bfs_async_radix {
+	extern module GraphGenerator;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices and number of edges)
+  readonly CmiUInt8                         N;
+	readonly CmiUInt8 												M;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+
+	class BFSVertex_PackedData;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void start();
+		entry [reductiontarget] void startGraphConstruction();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+		entry [reductiontarget] void resume();
+    entry [reductiontarget] void exit();
+		entry void grayVertexExist();
+  };
+
+	class BFSEdge;
+  array [1D] BFSVertex {
+    //entry BFSVertex();
+		entry void connectVertex(const BFSEdge & edge);
+		entry [reentrant] void update(int r); 
+		entry [reentrant] void resume();
+		entry void getScannedEdgesNum();
+  };
+
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<BFSEdge, int> >;
+  group ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<BFSEdge, int>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<BFSGraph, Options,		
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<BFSGraph, Options,		
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
+};
