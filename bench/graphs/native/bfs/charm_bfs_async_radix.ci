@@ -9,8 +9,6 @@ mainmodule charm_bfs_async_radix {
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
 
-	class BFSVertex_PackedData;
-
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
     entry [reductiontarget] void start();
@@ -23,7 +21,7 @@ mainmodule charm_bfs_async_radix {
 
 	class BFSEdge;
   array [1D] BFSVertex {
-    //entry BFSVertex();
+    entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
 		entry [reentrant] void update(int r); 
 		entry [reentrant] void resume();

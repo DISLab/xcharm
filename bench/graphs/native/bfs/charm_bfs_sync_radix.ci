@@ -23,7 +23,7 @@ mainmodule charm_bfs_sync_radix {
 
 	class BFSEdge;
   array [1D] BFSVertex {
-    //entry BFSVertex();
+    entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
 		entry void make_root();
 		entry [reentrant] void update(int level, CmiUInt8 parent, int r); 
