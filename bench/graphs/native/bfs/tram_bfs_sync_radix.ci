@@ -1,0 +1,58 @@
+mainmodule tram_bfs_sync_radix {
+	extern module GraphGenerator;
+	extern module NDMeshStreamer;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices and number of edges)
+  readonly CmiUInt8                         N;
+	readonly CmiUInt8 												M;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+  // Handle to the communication library (group)
+  readonly CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
+                                    SimpleMeshRouter> aggregator;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [reductiontarget] void start();
+		entry [reductiontarget] void startGraphConstruction();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+		entry [reductiontarget] void resume();
+    entry [reductiontarget] void exit();
+		entry void grayVertexExist();
+  };
+
+	class BFSEdge;
+  array [1D] BFSVertex {
+    entry BFSVertex();
+		entry void connectVertex(const BFSEdge & edge);
+		entry void make_root();
+		//entry [reentrant] void update(int r); 
+		entry void resume();
+		entry void getScannedEdgesNum();
+		entry void verify();
+		entry void check(int level);
+  };
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
+  group ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
+
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<BFSEdge, int> >;
+  group ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<BFSEdge, int>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<BFSGraph, Options,		
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<BFSGraph, Options,		
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
+};

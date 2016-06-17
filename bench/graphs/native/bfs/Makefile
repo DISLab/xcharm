@@ -12,7 +12,7 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 $(CHARMC_LINK_FLAGS)
 
 BINARY = charm_bfs_async charm_bfs_sync charm_bfs_async_radix charm_bfs_sync_radix\
-				 tram_bfs_async tram_bfs_sync tram_bfs_async_radix tram_bfs_sync_sync 
+				 tram_bfs_async tram_bfs_sync tram_bfs_async_radix tram_bfs_sync_radix 
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
 all: dir $(BINARY)
