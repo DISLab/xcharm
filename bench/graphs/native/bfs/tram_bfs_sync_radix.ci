@@ -29,7 +29,8 @@ mainmodule tram_bfs_sync_radix {
 		entry void connectVertex(const BFSEdge & edge);
 		entry void make_root();
 		//entry [reentrant] void update(int r); 
-		entry void resume();
+		entry [threaded] void process(const dtype & m);
+		entry [threaded] void resume();
 		entry void getScannedEdgesNum();
 		entry void verify();
 		entry void check(int level);

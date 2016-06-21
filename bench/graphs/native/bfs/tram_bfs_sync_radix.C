@@ -17,6 +17,12 @@ typedef struct __dtype {
 	int r;
   __dtype(int level, CmiUInt8 parent, int r) : 
 		level(level), parent(parent), r(r) {}
+	__dtype() {}
+	void pup(PUP::er & p) {
+		p | level;
+		p | parent;
+		p | r;
+	}
 } dtype;
 
 #include "tram_bfs_sync_radix.decl.h"
@@ -50,7 +56,7 @@ class BFSVertex : public CBase_BFSVertex {
 		CmiUInt8 numScannedEdges;
 
 	public:
-		BFSVertex() : state(White), parent(-1), numScannedEdges(0) {
+		BFSVertex() : state(White), level(-1), parent(-1), numScannedEdges(0) {
 			// Contribute to a reduction to signal the end of the setup phase
 			//contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
 		}

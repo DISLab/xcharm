@@ -28,6 +28,7 @@ mainmodule tram_bfs_sync {
 		entry void getScannedVertexNum();
 		entry void verify();
 		entry void check(int level);
+		entry [threaded] void process(const dtype & m);
   };
 
   // Setup required for the communication library

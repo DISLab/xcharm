@@ -16,8 +16,13 @@ typedef GraphLib::Graph<
 typedef struct __dtype {
 	int level; 
 	CmiUInt8 parent; 
+	__dtype() {}
   __dtype(int level, CmiUInt8 parent) : 
 		level(level), parent(parent) {}
+	void pup(PUP::er & p) {
+		p | level;
+		p | parent;
+	}
 } dtype;
 #include "tram_bfs_sync.decl.h"
 
