@@ -146,7 +146,7 @@ public:
   void start() {
 		BFSGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("[done]\n");
+		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
 		CkPrintf("Start breadth-first search:......\n");
     starttime = CkWallTimer();
