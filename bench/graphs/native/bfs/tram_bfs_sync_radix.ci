@@ -27,7 +27,7 @@ mainmodule tram_bfs_sync_radix {
   array [1D] BFSVertex {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry void make_root();
+		entry [threaded] void make_root();
 		//entry [reentrant] void update(int r); 
 		entry [threaded] void process(const dtype & m);
 		entry [threaded] void resume();

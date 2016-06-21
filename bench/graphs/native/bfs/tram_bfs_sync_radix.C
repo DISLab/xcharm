@@ -30,7 +30,7 @@ typedef struct __dtype {
 CmiUInt8 N, M;
 int K = 16;
 //int R = 128;
-int R = 64;
+int R = 2;
 CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
                          SimpleMeshRouter> aggregator;
@@ -98,10 +98,11 @@ class BFSVertex : public CBase_BFSVertex {
 				return;
 			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
 			state = Gray;
+			this->level = level + 1;
+			this->parent = parent;
+
 			if (r > 0) {
 				state = Black;
-				this->parent = parent;
-				this->level = level + 1;
 
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
