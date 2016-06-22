@@ -27,7 +27,7 @@ namespace GraphLib {
 
 			// FIXME: this is needed for compiling (remove it later)
 			template <typename dtype>
-				using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, int, V, SimpleMeshRouter>; 
+				using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, long long, V, SimpleMeshRouter>; 
 			template <typename M> void init(const CProxy_Aggregator<M> & aggregator) {}
 	};
 
@@ -42,12 +42,12 @@ namespace GraphLib {
 			Transport() {}
 			Transport(CProxy_V & thisProxy) : thisProxy(thisProxy) {}
 			template <typename dtype>
-				using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, int, V, SimpleMeshRouter>; 
+				using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, long long, V, SimpleMeshRouter>; 
 			template <typename M> void init(const CProxy_Aggregator<M> & aggregator) {
 				getAggregator<M>() = aggregator;
 			}
 			template <typename M> void sendMessage(M & m, VertexId v) {
-				ArrayMeshStreamer<M, int, V, SimpleMeshRouter>
+				ArrayMeshStreamer<M, long long, V, SimpleMeshRouter>
 					* localAggregator = getAggregator<M>().ckLocalBranch();
 				localAggregator->insertData(m, v);
 			}
@@ -66,7 +66,7 @@ namespace GraphLib {
 			Transport() {}
 			Transport(CProxy_V & thisProxy) : thisProxy(thisProxy) {}
 			template <typename dtype>
-				using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, int, V, SimpleMeshRouter>; 
+				using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, long long, V, SimpleMeshRouter>; 
 			template <typename M> void init(const CProxy_Aggregator<M> & aggregator) {
 			}
 	};

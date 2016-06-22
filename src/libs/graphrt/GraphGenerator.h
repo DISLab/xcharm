@@ -34,7 +34,7 @@ namespace GraphLib {
 		typedef typename Graph::Proxy CProxy_Graph;
 		typedef typename Graph::Vertex Vertex;
 		typedef typename Graph::Edge Edge;
-		typedef CProxy_ArrayMeshStreamer<Edge, int, Vertex, SimpleMeshRouter> CProxy_Aggregator;
+		typedef CProxy_ArrayMeshStreamer<Edge, long long, Vertex, SimpleMeshRouter> CProxy_Aggregator;
 		typedef CProxy_Generator_Tram<Graph, Opts, graphType, graphGeneratorType, CProxy_Aggregator> CProxy_Generator; 
 		typedef CkIndex_Generator_Tram<Graph, Opts, graphType, graphGeneratorType, CProxy_Aggregator> CkIndex_Generator;
 		CProxy_Generator generator;
@@ -89,7 +89,7 @@ namespace GraphLib {
 					void generate() { Generator<Graph, Opts, graphGeneratorType>::do_generate(); }
 					void addEdge(std::pair<uint64_t,uint64_t> & e) {
 						double w = drand48();
-						ArrayMeshStreamer<Edge, int, Vertex, SimpleMeshRouter>
+						ArrayMeshStreamer<Edge, long long, Vertex, SimpleMeshRouter>
 							* localAggregator = aggregator.ckLocalBranch();
 						localAggregator->insertData(Edge(e.second, w), e.first);
 						localAggregator->insertData(Edge(e.first, w), e.second);

@@ -39,10 +39,9 @@ private:
 	//		second -- accumulated sum
 	std::map<int, std::pair<int, double> > sumInPageRankValues;
 	double rank;
-	int icount;
 
 public:
-  PageRankVertex() : icount(0) {
+  PageRankVertex() {
 		rank = 1.0 / N;
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
@@ -62,7 +61,7 @@ public:
 		// broadcast
 		typedef typename std::vector<PageRankEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v].update(icount, rank / adjlist.size());
+			thisProxy[it->v].update(0, rank / adjlist.size());
 		}
 	}
 
@@ -74,12 +73,12 @@ public:
 		//CkPrintf("%d: update called (%d, %e), %d, %d\n", thisIndex, iter, r,
 		//		sumInPageRankValues[icount].first, adjlist.size());
 
-		if (sumInPageRankValues[icount].first == adjlist.size()) {
-			rank = (1.0 - D)/N + sumInPageRankValues[icount].second;
-			if (++icount < 3) {
+		if (sumInPageRankValues[iter].first == adjlist.size()) {
+			rank = (1.0 - D)/N + sumInPageRankValues[iter].second;
+			if (iter + 1 < 3) {
 				typedef typename std::vector<PageRankEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-					thisProxy[it->v].update(icount, rank / adjlist.size());
+					thisProxy[it->v].update(iter + 1, rank / adjlist.size());
 				}
 			}
 		} 

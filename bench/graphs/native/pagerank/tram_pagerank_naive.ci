@@ -1,11 +1,11 @@
-mainmodule tram_pagerank {
+mainmodule tram_pagerank_naive {
 	extern module GraphGenerator;
 
 	readonly CmiUInt8 N;
 	readonly double D;
   readonly CProxy_TestDriver               driverProxy;
   // Handle to the communication library (group)
-  readonly CProxy_ArrayMeshStreamer<dtype, int, PageRankVertex,
+  readonly CProxy_ArrayMeshStreamer<dtype, long long, PageRankVertex,
                                     SimpleMeshRouter> aggregator;
 
   mainchare TestDriver {
@@ -29,15 +29,15 @@ mainmodule tram_pagerank {
   };
 
 	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<PageRankEdge, int> >;
-  group ArrayMeshStreamer<PageRankEdge, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<PageRankEdge, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<PageRankEdge, long long> >;
+  group ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<PageRankEdge, long long>, SimpleMeshRouter>;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<PageRankGraph, Options,		
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<PageRankEdge, int, PageRankVertex, SimpleMeshRouter> >;
+		CProxy_ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<PageRankGraph, Options,		
@@ -45,7 +45,7 @@ mainmodule tram_pagerank {
 		GraphLib::GraphGeneratorType::Kronecker>;
 
   // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
-  group ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<dtype, long long> >;
+  group ArrayMeshStreamer<dtype, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
 };

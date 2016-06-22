@@ -24,12 +24,12 @@ typedef GraphLib::Graph<
 	GraphLib::TransportType::/*Tram*/Charm
 	> PageRankGraph;
 
-#include "tram_pagerank.decl.h"
+#include "tram_pagerank_naive.decl.h"
 
 CmiUInt8 N;
 double D;
 CProxy_TestDriver driverProxy;
-CProxy_ArrayMeshStreamer<dtype, int, PageRankVertex,
+CProxy_ArrayMeshStreamer<dtype, long long, PageRankVertex,
                          SimpleMeshRouter> aggregator;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
@@ -75,7 +75,7 @@ public:
 	}
 
 	void doPageRankStep_update() {
-    ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>
+    ArrayMeshStreamer<dtype, long long, PageRankVertex, SimpleMeshRouter>
       * localAggregator = aggregator.ckLocalBranch();
 		// broadcast
 		typedef typename std::vector<PageRankEdge>::iterator Iterator; 
@@ -141,7 +141,7 @@ public:
 
     // Instantiate communication library group with a handle to the client
     aggregator =
-      CProxy_ArrayMeshStreamer<dtype, int, PageRankVertex, SimpleMeshRouter>
+      CProxy_ArrayMeshStreamer<dtype, long long, PageRankVertex, SimpleMeshRouter>
       ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
 
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
@@ -229,4 +229,4 @@ public:
 	void foo() {CkAbort("foo called");}
 };
 
-#include "tram_pagerank.def.h"
+#include "tram_pagerank_naive.def.h"

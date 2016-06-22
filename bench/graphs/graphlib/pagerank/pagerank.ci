@@ -23,8 +23,7 @@ mainmodule pagerank {
 
 	class PageRankEdge; 
   array [1D] PageRankVertex : GraphLib::Vertex<PageRankVertex, 
-				PageRankEdge, 
-				GraphLib::TransportType::GRAPH_TRANSPORT> {
+				PageRankEdge, GraphLib::TransportType::GRAPH_TRANSPORT> {
     entry PageRankVertex();
 		entry void connectVertex(const PageRankEdge & edge);
 		entry void doPageRankStep_init();

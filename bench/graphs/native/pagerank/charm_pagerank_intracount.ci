@@ -26,15 +26,15 @@ mainmodule charm_pagerank_intracount {
   };
 
 	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<PageRankEdge, int> >;
-  group ArrayMeshStreamer<PageRankEdge, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<PageRankEdge, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<PageRankEdge, long long> >;
+  group ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<PageRankEdge, long long>, SimpleMeshRouter>;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<PageRankGraph, Options,		
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<PageRankEdge, int, PageRankVertex, SimpleMeshRouter> >;
+		CProxy_ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<PageRankGraph, Options,		

@@ -26,7 +26,7 @@ namespace GraphLib {
 				typedef CProxy_Vertex<V, E, transportType> CProxy_V;
 				typedef CkIndex_Vertex<V, E, transportType> CkIndex_V;
 				template <typename dtype>
-					using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, int, V, SimpleMeshRouter>; 
+					using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, long long, V, SimpleMeshRouter>; 
 
 			protected:
 				std::vector<E> edges;

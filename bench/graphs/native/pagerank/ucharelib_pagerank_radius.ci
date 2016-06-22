@@ -35,8 +35,8 @@ mainmodule ucharelib_pagerank_radius {
 //TODO: Can it be hidden?`
 	array [1D] uChareSet<PageRankVertex, CProxy_PageRankVertex, CBase_PageRankVertex>;
   // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
-  group ArrayMeshStreamer<Message, int, 
+  message MeshStreamerMessage<ArrayDataItem<Message, long long> >;
+  group ArrayMeshStreamer<Message, long long, 
 				uChareSet<PageRankVertex, CProxy_PageRankVertex, CBase_PageRankVertex>, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, long long>, SimpleMeshRouter>;
 };

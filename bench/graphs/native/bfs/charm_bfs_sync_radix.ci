@@ -32,15 +32,15 @@ mainmodule charm_bfs_sync_radix {
   };
 
 	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<BFSEdge, int> >;
-  group ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<BFSEdge, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<BFSEdge, long long> >;
+  group ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<BFSEdge, long long>, SimpleMeshRouter>;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<BFSGraph, Options,		
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter> >;
+		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<BFSGraph, Options,		

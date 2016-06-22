@@ -29,7 +29,7 @@ typedef struct __dtype {
 CmiUInt8 N, M;
 int K = 16;
 CProxy_TestDriver driverProxy;
-CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
+CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
                          SimpleMeshRouter> aggregator;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
@@ -76,7 +76,7 @@ public:
 		this->level = level + 1;
 		this->parent = parent;
 		typedef typename std::vector<BFSEdge>::iterator Iterator; 
-    ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+    ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
       * localAggregator = aggregator.ckLocalBranch();
 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
@@ -90,7 +90,7 @@ public:
 			return;
 		//CkPrintf("%d: updated\n", thisIndex);
 		level = 0;
-    ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+    ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
       * localAggregator = aggregator.ckLocalBranch();
 
 		typedef typename std::vector<BFSEdge>::iterator Iterator; 
@@ -148,7 +148,7 @@ public:
 
     // Instantiate communication library group with a handle to the client
     aggregator =
-      CProxy_ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+      CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
       ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
 
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);

@@ -8,7 +8,7 @@ mainmodule tram_bfs_sync {
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
   // Handle to the communication library (group)
-  readonly CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
+  readonly CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
                                     SimpleMeshRouter> aggregator;
 
   mainchare TestDriver {
@@ -32,20 +32,20 @@ mainmodule tram_bfs_sync {
   };
 
   // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
-  group ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<dtype, long long> >;
+  group ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
 
 	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<BFSEdge, int> >;
-  group ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<BFSEdge, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<BFSEdge, long long> >;
+  group ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<BFSEdge, long long>, SimpleMeshRouter>;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<BFSGraph, Options,		
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<BFSEdge, int, BFSVertex, SimpleMeshRouter> >;
+		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<BFSGraph, Options,		

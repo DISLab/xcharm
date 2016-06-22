@@ -23,9 +23,9 @@ typedef struct __dtype {
 CmiUInt8 N, M;
 int K = 16;
 //int R = 128;
-int R = 64;
+int R = 2;
 CProxy_TestDriver driverProxy;
-CProxy_ArrayMeshStreamer<dtype, int, BFSVertex,
+CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
                          SimpleMeshRouter> aggregator;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
@@ -72,7 +72,7 @@ class BFSVertex : public CBase_BFSVertex {
 			parent = thisIndex;
 
 			typedef typename std::vector<BFSEdge>::iterator Iterator; 
-			ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+			ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 				* localAggregator = aggregator.ckLocalBranch();
 			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 				localAggregator->insertData(dtype(thisIndex, R), it->v);
@@ -85,12 +85,13 @@ class BFSVertex : public CBase_BFSVertex {
 				return;
 			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
 			state = Gray;
+			parent = data.parent;
+
 			if (data.r > 0) {
 				state = Black;
-				parent = data.parent;
 
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
-				ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					localAggregator->insertData(dtype(thisIndex, data.r - 1), it->v);
@@ -105,7 +106,7 @@ class BFSVertex : public CBase_BFSVertex {
 			if (state == Gray) {
 				state = Black;
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
-				ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					//thisProxy[it->v].update(R);
@@ -159,7 +160,7 @@ public:
 
     // Instantiate communication library group with a handle to the client
     aggregator =
-      CProxy_ArrayMeshStreamer<dtype, int, BFSVertex, SimpleMeshRouter>
+      CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
       ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
 
     starttime = CkWallTimer();

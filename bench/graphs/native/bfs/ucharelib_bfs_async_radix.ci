@@ -38,8 +38,8 @@ mainmodule ucharelib_bfs_async_radix {
 	array [1D] uChareSet<BFSVertex, CProxy_BFSVertex, CBase_BFSVertex>;
 
   // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<Message, int> >;
-  group ArrayMeshStreamer<Message, int, 
+  message MeshStreamerMessage<ArrayDataItem<Message, long long> >;
+  group ArrayMeshStreamer<Message, long long, 
 				uChareSet<BFSVertex, CProxy_BFSVertex, CBase_BFSVertex>, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<Message, int>, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<Message, long long>, SimpleMeshRouter>;
 };

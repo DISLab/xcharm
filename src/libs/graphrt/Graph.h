@@ -48,7 +48,7 @@ namespace GraphLib {
 				typedef E Edge;
 				typedef CProxy_Vertex Proxy;
 				template <typename dtype>
-					using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, int, V, SimpleMeshRouter>; 
+					using CProxy_Aggregator = CProxy_ArrayMeshStreamer<dtype, long long, V, SimpleMeshRouter>; 
 			private:
 				CProxy_Vertex graphProxy;
 			public:
