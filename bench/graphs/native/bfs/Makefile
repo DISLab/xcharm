@@ -1,6 +1,6 @@
 include ../../../../config.mk
 CHARMXI=../../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -g -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
+CHARMC_COMPILE_FLAGS= -O3 -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include $(CFLAGS)
 CHARMC_LINK_FLAGS=-L./.tmp -L../../../../lib -lGraphGenerator \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \

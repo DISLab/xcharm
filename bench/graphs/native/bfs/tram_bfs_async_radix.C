@@ -86,7 +86,6 @@ class BFSVertex : public CBase_BFSVertex {
 			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
 			state = Gray;
 			parent = data.parent;
-
 			if (data.r > 0) {
 				state = Black;
 
@@ -220,6 +219,7 @@ public:
 			//root = rand_64(gen) % N;
 			root = rand() % N;
 			starttime = CkWallTimer();
+			CkPrintf("globalNumScannedEdges = %lld, M = %lld, root = %lld\n", globalNumScannedEdges, M, root);
 			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
