@@ -18,7 +18,7 @@ mainmodule tram_bfs_async_radix {
     entry [reductiontarget] void start();
 		entry [reductiontarget] void startGraphConstruction();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-		entry [reductiontarget] void resume();
+		entry [threaded] void resume();
     entry [reductiontarget] void exit();
 		entry void grayVertexExist();
   };
@@ -28,9 +28,13 @@ mainmodule tram_bfs_async_radix {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
 		entry void make_root();
-		//entry [reentrant] void update(int r); 
+		entry void process(const dtype &data); 
 		entry void resume();
 		entry void getScannedEdgesNum();
+		entry void getScannedVertexNum();
+		entry void verify();
+		entry void check();
+		//entry void foo();
   };
 
   // Setup required for the communication library

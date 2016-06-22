@@ -14,8 +14,13 @@ typedef GraphLib::Graph<
 typedef struct __dtype {
 	CmiUInt8 parent; 
 	int r;
+	__dtype() {}
   __dtype(CmiUInt8 parent, int r) : 
 		parent(parent), r(r) {}
+	void pup(PUP::er &p) {
+		p | parent;
+		p | r;
+	}
 } dtype;
 
 #include "tram_bfs_async_radix.decl.h"
@@ -66,6 +71,8 @@ class BFSVertex : public CBase_BFSVertex {
 		BFSVertex(CkMigrateMessage *msg) {}
 
 		void make_root() {
+			CkAssert(state != Gray);
+
 			if (state)
 				return;
 			state = Black;
@@ -76,6 +83,7 @@ class BFSVertex : public CBase_BFSVertex {
 				* localAggregator = aggregator.ckLocalBranch();
 			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 				localAggregator->insertData(dtype(thisIndex, R), it->v);
+				//thisProxy[it->v].process(dtype(thisIndex, R));
 				numScannedEdges++;
 			}
 		}
@@ -84,7 +92,7 @@ class BFSVertex : public CBase_BFSVertex {
 			if (state)
 				return;
 			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
-			state = Gray;
+			//state = Gray;
 			parent = data.parent;
 			if (data.r > 0) {
 				state = Black;
@@ -94,11 +102,13 @@ class BFSVertex : public CBase_BFSVertex {
 					* localAggregator = aggregator.ckLocalBranch();
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					localAggregator->insertData(dtype(thisIndex, data.r - 1), it->v);
-					//thisProxy[it->v].update(r-1);
+					//thisProxy[it->v].process(dtype(thisIndex, data.r - 1));
 					numScannedEdges++;
 				}
-			} else
+			} else {
 				state = Gray;
+				driverProxy.grayVertexExist();
+			}
 		}
 
 		void resume() {
@@ -108,11 +118,11 @@ class BFSVertex : public CBase_BFSVertex {
 				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-					//thisProxy[it->v].update(R);
 					localAggregator->insertData(dtype(thisIndex, R), it->v);
+					//thisProxy[it->v].process(dtype(thisIndex, R));
 					numScannedEdges++;
 				}
-				driverProxy.grayVertexExist();
+				//driverProxy.grayVertexExist();
 			}
 		}
 
@@ -121,6 +131,25 @@ class BFSVertex : public CBase_BFSVertex {
 					CkCallback(CkReductionTarget(TestDriver, done),
 						driverProxy));
 		}
+
+		void getScannedVertexNum() {
+			CmiUInt8 c = (state == Black ? 1 : 0);
+			contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
+					CkCallback(CkReductionTarget(TestDriver, done),
+						driverProxy));
+		}
+
+		void verify() {
+			CkAssert(state != Gray);
+			if (state == Black)
+				thisProxy[parent].check();
+		}
+
+		void check() {
+			CkAssert(state == Black);
+		}
+
+		//void foo() {}
 };
 
 
@@ -188,6 +217,8 @@ public:
     starttime = CkWallTimer();
 
     CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
+    //CkCallback startCb(CkIndex_BFSVertex::foo(), g[root]);
+		//g[root].make_root();
     CkCallback endCb(CkIndex_TestDriver::exit(), driverProxy);
     aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
 
@@ -210,26 +241,30 @@ public:
 
   void startVerificationPhase() {
 		BFSGraph::Proxy & g = graph->getProxy();
-		g.getScannedEdgesNum();
+		//g.getScannedEdgesNum();
+		g.verify();
+		CkStartQD(CkCallbackResumeThread());
+		g.getScannedVertexNum();
   }
 
-  void done(CmiUInt8 globalNumScannedEdges) {
+  void done(CmiUInt8 total) {
 
-		if (globalNumScannedEdges < 0.25 * M) {
+		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
+				N, 100.0*total/N, M, 100.0*total/M, root);
+		if (total < 0.25 * N) {
 			//root = rand_64(gen) % N;
 			root = rand() % N;
+
 			starttime = CkWallTimer();
-			CkPrintf("globalNumScannedEdges = %lld, M = %lld, root = %lld\n", globalNumScannedEdges, M, root);
 			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
+			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
+			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
+			//				 gteps / CkNumPes());
 			CkExit();
 		}
   }

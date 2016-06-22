@@ -26,6 +26,9 @@ mainmodule charm_bfs_async_radix {
 		entry [reentrant] void update(int r); 
 		entry [reentrant] void resume();
 		entry void getScannedEdgesNum();
+		entry void getScannedVertexNum();
+		entry void verify();
+		entry void check();
   };
 
 	// Setup required for the graph generation library

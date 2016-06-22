@@ -97,13 +97,11 @@ class BFSVertex : public CBase_BFSVertex {
 			if ((this->level >= 0) && (this->level <= level + 1))
 				return;
 			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
-			state = Gray;
 			this->level = level + 1;
 			this->parent = parent;
 
 			if (r > 0) {
 				state = Black;
-
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
@@ -111,8 +109,10 @@ class BFSVertex : public CBase_BFSVertex {
 					localAggregator->insertData(dtype(this->level, thisIndex, r - 1), it->v);
 					numScannedEdges++;
 				}
-			} else
+			} else {
 				state = Gray;
+				driverProxy.grayVertexExist();
+			}
 		}
 
 		void resume() {
@@ -126,7 +126,6 @@ class BFSVertex : public CBase_BFSVertex {
 					localAggregator->insertData(dtype(this->level, thisIndex, R), it->v);
 					numScannedEdges++;
 				}
-				driverProxy.grayVertexExist();
 			}
 		}
 
@@ -146,6 +145,7 @@ class BFSVertex : public CBase_BFSVertex {
 			if ((parent != -1) && (parent != thisIndex))
 				thisProxy[parent].check(level);
 		}
+
 		void check(int level) {
 			CkAssert(this->level + 1 == level);
 		}
