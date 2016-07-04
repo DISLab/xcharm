@@ -125,6 +125,7 @@ private:
 	typedef GraphLib::GraphGenerator<
 		BFSGraph, 
 		Options, 
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		GraphLib::TransportType::Tram> Generator;

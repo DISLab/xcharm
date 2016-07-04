@@ -97,6 +97,13 @@ public:
                CkCallback(CkReductionTarget(TestDriver, done),
                           driverProxy));
 	}
+
+	void getScannedVertexNum() {
+		CmiUInt8 c = (visited ? 1 : 0);
+		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
+				CkCallback(CkReductionTarget(TestDriver, done),
+					driverProxy));
+	}
 };
 
 class TestDriver : public CBase_TestDriver {
@@ -109,6 +116,7 @@ private:
 	typedef GraphLib::GraphGenerator<
 		BFSGraph, 
 		Options, 
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		GraphLib::TransportType::Tram> Generator;
@@ -183,24 +191,27 @@ public:
 
   void startVerificationPhase() {
 		BFSGraph::Proxy & g = graph->getProxy();
-		g.getScannedEdgesNum();
+		//g.getScannedEdgesNum();
+		g.getScannedVertexNum();
   }
 
-  void done(CmiUInt8 globalNumScannedEdges) {
-		if (globalNumScannedEdges < 0.25 * M) {
+  void done(CmiUInt8 total) {
+		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
+				N, 100.0*total/N, M, 100.0*total/M, root);
+		if (total < 0.25 * N) {
 			//root = rand_64(gen) % N;
 			root = rand() % N;
 			starttime = CkWallTimer();
-			CkPrintf("restart test\n");
+			CkPrintf("restart test, root=%lld\n", root);
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
+			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
+			//CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
+			//				 gteps / CkNumPes());
 			CkExit();
 		}
   }

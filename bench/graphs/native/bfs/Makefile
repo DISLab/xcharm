@@ -12,50 +12,38 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 $(CHARMC_LINK_FLAGS)
 
 BINARY = charm_bfs_async charm_bfs_sync charm_bfs_async_radix charm_bfs_sync_radix\
+				 charm_multivertex_bfs_async \
 				 tram_bfs_async tram_bfs_sync tram_bfs_async_radix tram_bfs_sync_radix 
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
 all: dir $(BINARY)
 
 charm_bfs_async: charm_bfs_async.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ .tmp/$+ -module NDMeshStreamer
 charm_bfs_async.o: charm_bfs_async.C charm_bfs_async.decl.h charm_bfs_async.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o .tmp/$@ $<
 
 charm_bfs_sync: charm_bfs_sync.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 charm_bfs_sync.o: charm_bfs_sync.C charm_bfs_sync.decl.h charm_bfs_sync.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $<
 
 charm_bfs_async_radix: charm_bfs_async_radix.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ .tmp/$+ -module NDMeshStreamer
 charm_bfs_async_radix.o: charm_bfs_async_radix.C charm_bfs_async_radix.decl.h charm_bfs_async_radix.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o .tmp/$@ $<
 
 charm_bfs_sync_radix: charm_bfs_sync_radix.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ .tmp/$+ -module NDMeshStreamer
 charm_bfs_sync_radix.o: charm_bfs_sync_radix.C charm_bfs_sync_radix.decl.h charm_bfs_sync_radix.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o .tmp/$@ $<
 
 tram_bfs_async: tram_bfs_async.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 tram_bfs_async.o: tram_bfs_async.C tram_bfs_async.decl.h tram_bfs_async.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 tram_bfs_sync: tram_bfs_sync.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 tram_bfs_sync.o: tram_bfs_sync.C tram_bfs_sync.decl.h tram_bfs_sync.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 tram_bfs_async_radix: tram_bfs_async_radix.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 tram_bfs_async_radix.o: tram_bfs_async_radix.C tram_bfs_async_radix.decl.h tram_bfs_async_radix.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 tram_bfs_sync_radix: tram_bfs_sync_radix.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 tram_bfs_sync_radix.o: tram_bfs_sync_radix.C tram_bfs_sync_radix.decl.h tram_bfs_sync_radix.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
+
+charm_multivertex_bfs_async: charm_multivertex_bfs_async.o
+charm_multivertex_bfs_async.o: charm_multivertex_bfs_async.C charm_multivertex_bfs_async.decl.h charm_multivertex_bfs_async.def.h
 
 ucharelib_bfs_async: ucharelib_bfs_async.o 
 	$(CHARMC) $(XCHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+  
@@ -66,6 +54,12 @@ ucharelib_bfs_async_radix: ucharelib_bfs_async_radix.o
 	$(CHARMC) $(XCHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+  
 ucharelib_bfs_async_radix.o: ucharelib_bfs_async_radix.C ucharelib_bfs_async_radix.decl.h ucharelib_bfs_async_radix.def.h
 	$(CHARMC) $(XCHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
+
+%: %.o 
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ .tmp/$< -module NDMeshStreamer
+
+%.o: %.C %.decl.h %.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 %.def.h %.decl.h: %.ci
 	$(CHARMXI) $<

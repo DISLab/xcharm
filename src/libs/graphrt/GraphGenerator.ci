@@ -1,17 +1,17 @@
 module GraphGenerator {
 	extern module NDMeshStreamer;
 	namespace GraphLib {
-		template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType> 
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType> 
 			group Generator_Charm  {
 				entry Generator_Charm(Graph & g, Opts & opts);
 				entry [threaded] void generate();
 			};	
-		template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator> 
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator> 
 			group Generator_Tram  {
 				entry Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator);
 				entry [threaded] void generate();
 			};	
-		template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType> 
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType> 
 			group Generator_uChareLib  {
 				entry Generator_uChareLib(Graph & g, Opts & opts);
 				entry [threaded] void generate();

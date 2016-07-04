@@ -1,4 +1,4 @@
-mainmodule charm_bfs_sync {
+mainmodule charm_multivertex_bfs_async {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
@@ -14,36 +14,37 @@ mainmodule charm_bfs_sync {
     entry [reductiontarget] void start();
 		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    //entry void startVerificationPhase();
 		entry void startGraphConstruction();
 		entry void exit();
   };
 
 	class BFSEdge;
-  array [1D] BFSVertex {
-    entry BFSVertex();
-		entry void connectVertex(const BFSEdge & edge);
-		entry void make_root();
-		entry void update(int level, CmiUInt8 parent); 
+  array [1D] BFSMultiVertex {
+    entry BFSMultiVertex();
+		entry void connectVertex(std::pair<CmiUInt8, BFSEdge> & edge);
+		entry void update(const CmiUInt8 & v); 
+		entry void verify(); 
+		entry void check(const CmiUInt8 & v); 
+		entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
-		entry void verify();
-		entry void check(int level);
   };
 
 	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<BFSEdge, long long> >;
-  group ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<BFSEdge, long long>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<std::pair<CmiUInt8, BFSEdge>, long long> >;
+  group ArrayMeshStreamer<std::pair<CmiUInt8, BFSEdge>, long long, BFSMultiVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<std::pair<CmiUInt8, BFSEdge>, long long>, SimpleMeshRouter>;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::VertexMapping::MultiVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
+		CProxy_ArrayMeshStreamer<std::pair<CmiUInt8, BFSEdge>, long long, BFSMultiVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::VertexMapping::MultiVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker>;
 };

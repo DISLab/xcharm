@@ -24,6 +24,7 @@ mainmodule charm_bfs_async {
 		entry void connectVertex(const BFSEdge & edge);
 		entry void update(); 
 		entry void getScannedEdgesNum();
+		entry void getScannedVertexNum();
   };
 
 	// Setup required for the graph generation library
@@ -33,12 +34,14 @@ mainmodule charm_bfs_async {
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<BFSGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<BFSGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker>;
 };

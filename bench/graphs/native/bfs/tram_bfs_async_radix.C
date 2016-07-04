@@ -165,6 +165,7 @@ private:
 	typedef GraphLib::GraphGenerator<
 		BFSGraph, 
 		Options, 
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		GraphLib::TransportType::Tram> Generator;
@@ -248,7 +249,6 @@ public:
   }
 
   void done(CmiUInt8 total) {
-
 		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
 				N, 100.0*total/N, M, 100.0*total/M, root);
 		if (total < 0.25 * N) {

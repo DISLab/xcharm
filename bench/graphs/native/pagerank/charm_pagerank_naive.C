@@ -117,6 +117,7 @@ public:
   }
 
   void startGraphConstruction() {
+		while (opts.freeze_after_graph_creation) {}
 		CkPrintf("PageRank running...\n");
 		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");

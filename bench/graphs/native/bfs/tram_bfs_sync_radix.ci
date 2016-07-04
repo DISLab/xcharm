@@ -49,12 +49,14 @@ mainmodule tram_bfs_sync_radix {
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<BFSGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<BFSGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker>;
 };

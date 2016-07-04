@@ -7,10 +7,12 @@ struct Options {
 	bool strongscale;
 	bool verify;
 	bool freeze;
+	bool freeze_after_graph_creation;
 	CmiUInt8 N;
 	CmiUInt8 M;
 	CmiUInt8 root;
-	Options() : scale(10), K(16), strongscale(true), verify(false), freeze(false), root(0) {
+	Options() : scale(10), K(16), strongscale(true), verify(false), 
+		freeze(false), freeze_after_graph_creation(false), root(0) {
 		N = (1 << scale);
 		M = N * K;
 	}
@@ -50,6 +52,9 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 		}
 		if (!strcmp(argv[i], "--freeze")) {
 			opts.freeze = true;
+		}
+		if (!strcmp(argv[i], "--freeze-after-graph-creation")) {
+			opts.freeze_after_graph_creation = true;
 		}
 	}
 

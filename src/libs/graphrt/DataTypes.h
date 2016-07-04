@@ -4,6 +4,7 @@
 
 namespace GraphLib {
 	typedef CmiUInt8 VertexId;
+	typedef enum {SingleVertex = 0, MultiVertex} VertexMapping;
 	typedef enum {Directed = 0, Undirected} GraphType;
 	typedef enum {Charm = 0, Tram, uChareLib} TransportType;
 	typedef enum {Kronecker = 0, SSCA2} GraphGeneratorType;
