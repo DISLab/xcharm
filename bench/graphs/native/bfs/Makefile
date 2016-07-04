@@ -1,6 +1,6 @@
 include ../../../../config.mk
 CHARMXI=../../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -O3 -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
+CHARMC_COMPILE_FLAGS= -g -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include $(CFLAGS)
 CHARMC_LINK_FLAGS=-L./.tmp -L../../../../lib -lGraphGenerator \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
@@ -44,6 +44,9 @@ tram_bfs_sync_radix.o: tram_bfs_sync_radix.C tram_bfs_sync_radix.decl.h tram_bfs
 
 charm_multivertex_bfs_async: charm_multivertex_bfs_async.o
 charm_multivertex_bfs_async.o: charm_multivertex_bfs_async.C charm_multivertex_bfs_async.decl.h charm_multivertex_bfs_async.def.h
+
+tram_multivertex_bfs_async: tram_multivertex_bfs_async.o
+tram_multivertex_bfs_async.o: tram_multivertex_bfs_async.C tram_multivertex_bfs_async.decl.h tram_multivertex_bfs_async.def.h
 
 ucharelib_bfs_async: ucharelib_bfs_async.o 
 	$(CHARMC) $(XCHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+  
