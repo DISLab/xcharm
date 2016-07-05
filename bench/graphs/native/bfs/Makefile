@@ -52,6 +52,9 @@ charm_multivertex_bfs_sync.o: charm_multivertex_bfs_sync.C charm_multivertex_bfs
 tram_multivertex_bfs_async: tram_multivertex_bfs_async.o
 tram_multivertex_bfs_async.o: tram_multivertex_bfs_async.C tram_multivertex_bfs_async.decl.h tram_multivertex_bfs_async.def.h
 
+tram_multivertex_bfs_sync: tram_multivertex_bfs_sync.o
+tram_multivertex_bfs_sync.o: tram_multivertex_bfs_sync.C tram_multivertex_bfs_sync.decl.h tram_multivertex_bfs_sync.def.h
+
 ucharelib_bfs_async: ucharelib_bfs_async.o 
 	$(CHARMC) $(XCHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+  
 ucharelib_bfs_async.o: ucharelib_bfs_async.C ucharelib_bfs_async.decl.h ucharelib_bfs_async.def.h
