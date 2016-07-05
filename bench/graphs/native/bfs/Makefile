@@ -11,9 +11,10 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = charm_bfs_async charm_bfs_sync charm_bfs_async_radix charm_bfs_sync_radix\
-				 charm_multivertex_bfs_async \
-				 tram_bfs_async tram_bfs_sync tram_bfs_async_radix tram_bfs_sync_radix 
+BINARY = charm_bfs_async charm_bfs_sync charm_bfs_async_radix charm_bfs_sync_radix \
+				 charm_multivertex_bfs_async charm_multivertex_bfs_sync \
+				 tram_bfs_async tram_bfs_sync tram_bfs_async_radix tram_bfs_sync_radix \
+				 tram_multivertex_bfs_async
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
 all: dir $(BINARY)
@@ -44,6 +45,9 @@ tram_bfs_sync_radix.o: tram_bfs_sync_radix.C tram_bfs_sync_radix.decl.h tram_bfs
 
 charm_multivertex_bfs_async: charm_multivertex_bfs_async.o
 charm_multivertex_bfs_async.o: charm_multivertex_bfs_async.C charm_multivertex_bfs_async.decl.h charm_multivertex_bfs_async.def.h
+
+charm_multivertex_bfs_sync: charm_multivertex_bfs_sync.o
+charm_multivertex_bfs_sync.o: charm_multivertex_bfs_sync.C charm_multivertex_bfs_sync.decl.h charm_multivertex_bfs_sync.def.h
 
 tram_multivertex_bfs_async: tram_multivertex_bfs_async.o
 tram_multivertex_bfs_async.o: tram_multivertex_bfs_async.C tram_multivertex_bfs_async.decl.h tram_multivertex_bfs_async.def.h
