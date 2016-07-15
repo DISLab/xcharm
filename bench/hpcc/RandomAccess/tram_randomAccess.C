@@ -69,7 +69,7 @@ public:
   void startVerificationPhase() {
     double update_walltime = CkWallTimer() - starttime;
     double gups = 1e-9 * tableSize * 4.0/update_walltime;
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
+    CkPrintf("[Final] CPU time used = %.6f seconds, %.9f GUPS\n", update_walltime, gups);
     CkPrintf("%.9f Billion(10^9) Updates    per second [GUP/s]\n", gups);
     CkPrintf("%.9f Billion(10^9) Updates/PE per second [GUP/s]\n",
              gups / CkNumPes());
