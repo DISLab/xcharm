@@ -1,8 +1,6 @@
 all:
-	make all -C bfs
-	make all -C sssp
-	make all -C cc
+	make all -C graphlib
+	make all -C native
 clean:
-	make clean -C bfs
-	make clean -C sssp
-	make clean -C cc
+	make clean -C graphlib
+	make clean -C native

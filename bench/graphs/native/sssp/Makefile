@@ -1,4 +1,4 @@
-include ../../../config.mk
+include ../../../../config.mk
 CHARMXI=../../../bin/charmxi
 CHARMC_COMPILE_FLAGS= -O3 -I.. -I../../../include/graphrt  -I../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include
