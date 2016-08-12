@@ -33,12 +33,14 @@ mainmodule charm_pagerank_naive {
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<PageRankGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		CProxy_ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<PageRankGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker>;
 };

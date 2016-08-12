@@ -94,6 +94,7 @@ private:
 	typedef GraphLib::GraphGenerator<
 		PageRankGraph, 
 		Options, 
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
 		GraphLib::TransportType::Tram> Generator;

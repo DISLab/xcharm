@@ -1,8 +1,8 @@
 include ../../../../config.mk
 CHARMXI=../../../../bin/charmxi
 CHARMC_COMPILE_FLAGS= -O3 -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
-											-I$(BOOST_ROOT)/include
-CHARMC_LINK_FLAGS=-g -L./.tmp  -L../../../../lib -lGraphGenerator \
+											-I$(BOOST_ROOT)/include -Wno-deprecated-declarations
+CHARMC_LINK_FLAGS=-g -L./.tmp  -L../../../../lib -lGraph \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
 									-module ampi
 
@@ -19,34 +19,28 @@ BINARY = charm_pagerank_naive charm_pagerank_intracount charm_pagerank_async \
 all: dir $(BINARY)
 
 charm_pagerank_naive: charm_pagerank_naive.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 charm_pagerank_naive.o: charm_pagerank_naive.C charm_pagerank_naive.decl.h charm_pagerank_naive.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $<
 
 charm_pagerank_intracount: charm_pagerank_intracount.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 charm_pagerank_intracount.o: charm_pagerank_intracount.C charm_pagerank_intracount.decl.h charm_pagerank_intracount.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $<
 
 charm_pagerank_async: charm_pagerank_async.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 charm_pagerank_async.o: charm_pagerank_async.C charm_pagerank_async.decl.h charm_pagerank_async.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $<
 
 tram_pagerank_naive: tram_pagerank_naive.o
-	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+ -module NDMeshStreamer
 tram_pagerank_naive.o: tram_pagerank_naive.C tram_pagerank_naive.decl.h tram_pagerank_naive.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 ucharelib_pagerank: ucharelib_pagerank.o 
-	$(CHARMC) $(XCHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+  
 ucharelib_pagerank.o: ucharelib_pagerank.C ucharelib_pagerank.decl.h ucharelib_pagerank.def.h
-	$(CHARMC) $(XCHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 ucharelib_pagerank_radius: ucharelib_pagerank_radius.o 
-	$(CHARMC) $(XCHARMC_LINK_FLAGS) -language charm++ -o $@ ./.tmp/$+  
 ucharelib_pagerank_radius.o: ucharelib_pagerank_radius.C ucharelib_pagerank_radius.decl.h ucharelib_pagerank_radius.def.h
-	$(CHARMC) $(XCHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
+
+%: %.o 
+	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ .tmp/$< -module NDMeshStreamer
+
+%.o: %.C %.decl.h %.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< 
 
 %.def.h %.decl.h: %.ci
 	$(CHARMXI) $<
