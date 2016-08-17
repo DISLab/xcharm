@@ -1,4 +1,4 @@
-mainmodule tram_multivertex_bfs_async {
+mainmodule tram_multivertex_bfs {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
@@ -14,7 +14,7 @@ mainmodule tram_multivertex_bfs_async {
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
+    entry [reductiontarget, threaded] void start();
 		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
     //entry void startVerificationPhase();
@@ -29,7 +29,7 @@ mainmodule tram_multivertex_bfs_async {
 		entry [threaded] void make_root(const CmiUInt8 & v); 
 		entry [threaded] void process(const dtype & data);
 		entry void verify(); 
-		entry void check(const CmiUInt8 & v); 
+		entry void check(const CmiUInt8 & v, const int & level); 
 		entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
 		entry void foo();

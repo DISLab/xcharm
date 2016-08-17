@@ -21,25 +21,22 @@ struct BFSEdge {
 	}
 };
 
-#include "ucharelib_bfs_async_radix.decl.h"
+#include "ucharelib_parallel_search.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
-//int R = 128;
-int R = 64;
-
 CProxy_TestDriver driverProxy;
 
 class BFSVertex : public CBase_uChare_BFSVertex {
 	private:
 		std::vector<CmiUInt8> adjlist;
-		enum State {White, Gray, Black} state;
+		bool visited;
 		CmiUInt8 parent;
 		CmiUInt8 numScannedEdges;
 
 	public:
-		BFSVertex(const uChareAttr_BFSVertex & attr) : state(White), parent(-1), numScannedEdges(0),
-			CBase_uChare_BFSVertex(attr) {
+		BFSVertex(const uChareAttr_BFSVertex & attr) : visited(false), parent(-1), numScannedEdges(0),
+				CBase_uChare_BFSVertex(attr) {
 			//CkPrintf("[uchare=%d, chare=%d,pe=%d]: created \n", 
 			//		getId(), getuChareSet()->getId(), getuChareSet()->getPe());
 
@@ -51,41 +48,26 @@ class BFSVertex : public CBase_uChare_BFSVertex {
 			if (edge.v > CkNumPes() * N) 
 				CkAbort("Incorrect dest vertex ID");
 			adjlist.push_back(edge.v);
-			//CkPrintf("[vertex:%lld] connected to %lld\n", thisIndex, vertexId);
+			//CkPrintf("[vertex:% d] connected to %d\n", thisIndex, vertexId);
 		}
 
-		void update(int r) {
-			if (state)
+		void verify() {
+			typedef typename std::vector<CmiUInt8>::iterator Iterator; 
+			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) 
+				if (*it > CkNumPes() * N) 
+					CkAbort("---->Incorrect dest vertex ID");
+			CkPrintf("[vertex:% d] verified\n", thisIndex);
+		}
+
+		void update() {
+			if (visited)
 				return;
-
-			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
-			state = Gray;
-
-			if (r > 0) {
-				state = Black;
-				typedef typename std::vector<CmiUInt8>::iterator Iterator; 
-				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-						thisProxy[*it]->update(r-1);
-						//CkPrintf("%d: update %d\n", thisIndex, *it);
-						numScannedEdges++;
-						//getProxy().flush();
-				}
-			} else
-				state = Gray;
-		}
-
-		void resume() {
-			if (state == Gray) {
-				state = Black;
-				typedef typename std::vector<CmiUInt8>::iterator Iterator; 
-				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-						thisProxy[*it]->update(R);
-						//CkPrintf("%d: update %d\n", thisIndex, *it);
-						numScannedEdges++;
-						//getProxy().flush();
-				}
-
-				driverProxy.grayVertexExist();
+			//CkPrintf("%d (pe=%d): updated\n", thisIndex, getuChareSet()->getPe());
+			visited = true;
+			typedef typename std::vector<CmiUInt8>::iterator Iterator; 
+			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+					thisProxy[*it]->update();
+					numScannedEdges++;
 			}
 		}
 
@@ -104,24 +86,22 @@ private:
 	CProxy_uChare_BFSVertex g;
 	double startt;
 	double endt;
-
 	CmiUInt8 root;
   double starttime;
-	bool complete;
-
 	Options opts;
 
 	CProxy_GraphGenerator<CProxy_uChare_BFSVertex, BFSEdge, Options> generator;
 
 public:
-  TestDriver(CkArgMsg* args) : complete(false) {
+  TestDriver(CkArgMsg* args) {
 		parseCommandOptions(args->argc, args->argv, opts);
-		N = opts.N;
+    N = opts.N;
 		M = opts.M;
 		root = opts.root;
+
     driverProxy = thishandle;
 
-	  g = CProxy_uChare_BFSVertex::ckNew(N, CkNumPes()); 
+		g = CProxy_uChare_BFSVertex::ckNew(N, CkNumPes()); 
 
 		// create graph generator
 		generator = CProxy_GraphGenerator<CProxy_uChare_BFSVertex, BFSEdge, Options>::ckNew(g, opts); 
@@ -139,6 +119,8 @@ public:
 		CkPrintf("BFS running...\n");
 		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
+		;
+		
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
@@ -147,33 +129,28 @@ public:
 		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 
+	void exit() {
+		CkAbort("exit: must be never called\n");
+	}
+
   void start() {
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("[done]\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		CkPrintf("Start breadth-first search:......\n");
+		CkPrintf("Start breadth-first search:......");
     starttime = CkWallTimer();
-		g[root]->update(R);
+		g[root]->update();
+		//g->verify();
 
-		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::testCompletion(), &thishandle);
   }
 
-	void resume() {
-		if (!complete) {
-			complete = true;
-			g.resume();
-			CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
-		}
-		else startVerificationPhase();
+	void testCompletion() {
+		CkPrintf("[done]\n");
+		if (opts.verify)
+			g.getScannedEdgesNum();
+		//uchareset_proxy.gatherPendingMessagesNum(CkCallback(CkReductionTarget(TestDriver, testCompletion2), thisProxy));
 	}
-
-	void grayVertexExist() {
-		complete = false;
-	}
-
-  void startVerificationPhase() {
-		g.getScannedEdgesNum();
-  }
 
   void done(CmiUInt8 globalNumScannedEdges) {
 
@@ -207,11 +184,6 @@ public:
     //         "passed" : "failed");
     CkExit();
   }
-
-	void exit() {
-		CkAbort("exit: must be never called\n");
-	}
-
 };
 
-#include "ucharelib_bfs_async_radix.def.h"
+#include "ucharelib_parallel_search.def.h"

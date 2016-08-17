@@ -1,4 +1,4 @@
-mainmodule charm_multivertex_bfs_async {
+mainmodule tram_multivertex_parallel_search {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
@@ -8,6 +8,9 @@ mainmodule charm_multivertex_bfs_async {
   readonly CmiUInt8                         M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
+  // Handle to the communication library (group)
+  readonly CProxy_ArrayMeshStreamer<dtype, long long, BFSMultiVertex,
+                                    SimpleMeshRouter> aggregator;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
@@ -23,12 +26,19 @@ mainmodule charm_multivertex_bfs_async {
   array [1D] BFSMultiVertex {
     entry BFSMultiVertex();
 		entry void connectVertex(std::pair<CmiUInt8, BFSEdge> & edge);
-		entry void update(const CmiUInt8 & v); 
+		entry [threaded] void make_root(const CmiUInt8 & v); 
+		entry [threaded] void process(const dtype & data);
 		entry void verify(); 
 		entry void check(const CmiUInt8 & v); 
 		entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
+		entry void foo();
   };
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<dtype, long long> >;
+  group ArrayMeshStreamer<dtype, long long, BFSMultiVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
 
 	// Setup required for the graph generation library
   message MeshStreamerMessage<ArrayDataItem<std::pair<CmiUInt8, BFSEdge>, long long> >;

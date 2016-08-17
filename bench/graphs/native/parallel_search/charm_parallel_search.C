@@ -10,7 +10,8 @@ typedef GraphLib::Graph<
 	CProxy_BFSVertex,
 	GraphLib::TransportType::/*Tram*/Charm
 	> BFSGraph;
-#include "charm_bfs_sync.decl.h"
+
+#include "charm_parallel_search.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
@@ -29,11 +30,12 @@ struct BFSEdge {
 class BFSVertex : public CBase_BFSVertex {
 private:
 	std::vector<BFSEdge> adjlist;
-	int level;
+	bool visited;
 	CmiUInt8 parent;
+	CmiUInt8 numScannedEdges;
 
 public:
-  BFSVertex() : level(-1), parent(-1) {
+  BFSVertex() : visited(false), parent(-1), numScannedEdges(0) {
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
   }
@@ -48,41 +50,29 @@ public:
 
   BFSVertex(CkMigrateMessage *msg) {}
 
-	void make_root() {
-		//CkPrintf("%d: updated\n", thisIndex);
-		this->level = 0;
-		typedef typename std::vector<BFSEdge>::iterator Iterator; 
-		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			if (it->v != thisIndex)
-				thisProxy[it->v].update(this->level, thisIndex);
-		}
-	}
-
-  void update(int level, CmiUInt8 parent) {
-		if ((this->level >= 0) && (this->level <= level + 1))
+  void update() {
+		if (visited)
 			return;
-		//CkPrintf("%d: updated level(%d->%d), parent(%lld->%lld)\n", 
-		//		thisIndex, this->level, level, this->parent, parent);
-		this->level = level + 1;
-		this->parent = parent;
+		//CkPrintf("%d: updated\n", thisIndex);
+		visited = true;
 		typedef typename std::vector<BFSEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v].update(this->level, thisIndex);
+			thisProxy[it->v].update();
+			numScannedEdges++;
 		}
   }
 
-	void getScannedVertexNum() {
-		CmiUInt8 c = (parent == -1 ? 0 : 1);
-		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
-				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	void getScannedEdgesNum() {
+    contribute(sizeof(CmiUInt8), &numScannedEdges, CkReduction::sum_long,
+               CkCallback(CkReductionTarget(TestDriver, done),
+                          driverProxy));
 	}
 
-	void verify() {
-		if ((parent != -1) && (parent != thisIndex))
-			thisProxy[parent].check(level);
-	}
-	void check(int level) {
-		CkAssert(this->level + 1 == level);
+	void getScannedVertexNum() {
+		CmiUInt8 c = (visited ? 1 : 0);
+		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
+				CkCallback(CkReductionTarget(TestDriver, done),
+					driverProxy));
 	}
 };
 
@@ -108,10 +98,8 @@ public:
 		parseCommandOptions(args->argc, args->argv, opts);
     N = opts.N;
 		M = opts.M;
-		root = opts.root;
     driverProxy = thishandle;
 
-    // Create the chares storing vertices
     // Create graph
     graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
 		// create graph generator
@@ -140,46 +128,38 @@ public:
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-    CkPrintf("root = %lld\n", root);
+		root = random() % N;
+		CkPrintf("root=%lld\n", root);
     starttime = CkWallTimer();
-		g[root].make_root();
+		g[root].update();
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
   void startVerificationPhase() {
 		BFSGraph::Proxy & g = graph->getProxy();
+		//g.getScannedEdgesNum();
 		g.getScannedVertexNum();
   }
 
-  void done(CmiUInt8 globalNumScannedVertices) {
+  void done(CmiUInt8 total) {
 		BFSGraph::Proxy & g = graph->getProxy();
-		CkPrintf("globalNumScannedVertices = %lld\n", globalNumScannedVertices);
-		if (globalNumScannedVertices < 0.25 * N) {
-			//root = rand_64(gen) % N;
-			root = rand() % N;
+		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
+				N, 100.0*total/N, M, 100.0*total/M, root);
+		if (total < 0.25 * N) {
 			starttime = CkWallTimer();
 			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedVertices * 1.0/update_walltime;
+			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld (%.0f%%)\n", globalNumScannedVertices, (double)globalNumScannedVertices*100/M);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
-			if (opts.verify) { 
-				CkPrintf("Start verification...\n");
-				g.verify();
-			}
-			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
+			//CkPrintf("Scanned edges = %lld (%.0f%%)\n", globalNumScannedEdges, (double)globalNumScannedEdges*100/M);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
+			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
+			//				 gteps / CkNumPes());
+			CkExit();
 		}
   }
-
-	void exit() {
-		CkPrintf("Done.\n");
-		CkExit();
-	}
 };
 
-#include "charm_bfs_sync.def.h"
+#include "charm_parallel_search.def.h"

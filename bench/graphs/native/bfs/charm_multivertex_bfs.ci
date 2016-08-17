@@ -1,4 +1,4 @@
-mainmodule charm_multivertex_bfs_sync {
+mainmodule charm_multivertex_bfs {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 

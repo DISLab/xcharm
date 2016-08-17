@@ -15,7 +15,7 @@ typedef GraphLib::Graph<
 	GraphLib::TransportType::/*Tram*/Charm
 	> BFSGraph;
 
-#include "tram_bfs_async.decl.h"
+#include "tram_parallel_search.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
@@ -127,7 +127,6 @@ public:
 		parseCommandOptions(args->argc, args->argv, opts);
     N = opts.N;
 		M = opts.M;
-		root = opts.root;
 
     driverProxy = thishandle;
 
@@ -179,6 +178,8 @@ public:
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
+		root = random() % N;
+		CkPrintf("root=%lld\n", root);
     starttime = CkWallTimer();
 
 		//g[root].make_root();
@@ -199,8 +200,6 @@ public:
 		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
 				N, 100.0*total/N, M, 100.0*total/M, root);
 		if (total < 0.25 * N) {
-			//root = rand_64(gen) % N;
-			root = rand() % N;
 			starttime = CkWallTimer();
 			CkPrintf("restart test, root=%lld\n", root);
 			driverProxy.start();
@@ -217,4 +216,4 @@ public:
   }
 };
 
-#include "tram_bfs_async.def.h"
+#include "tram_parallel_search.def.h"

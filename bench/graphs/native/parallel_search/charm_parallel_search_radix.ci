@@ -1,4 +1,4 @@
-mainmodule charm_bfs_sync_radix {
+mainmodule charm_parallel_search_radix {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
@@ -8,8 +8,6 @@ mainmodule charm_bfs_sync_radix {
 	readonly CmiUInt8 												M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
-
-	class BFSVertex_PackedData;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
@@ -25,10 +23,12 @@ mainmodule charm_bfs_sync_radix {
   array [1D] BFSVertex {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry void make_root();
-		entry void update(int level, CmiUInt8 parent, int r); 
-		entry void resume();
+		entry [reentrant] void update(int r); 
+		entry [reentrant] void resume();
 		entry void getScannedEdgesNum();
+		entry void getScannedVertexNum();
+		entry void verify();
+		entry void check();
   };
 
 	// Setup required for the graph generation library

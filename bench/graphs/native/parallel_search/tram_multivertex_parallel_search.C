@@ -2,6 +2,15 @@
 #include <common.h>
 #include <deque>
 
+
+typedef struct __dtype {
+	CmiUInt8 v;
+	CmiUInt8 parent;
+	__dtype() {}
+	__dtype(CmiUInt8 v, CmiUInt8 parent) : v(v), parent(parent) {}
+	void pup(PUP::er & p) { p | v; p | parent; }
+} dtype;
+
 class BFSMultiVertex;
 class BFSEdge;
 class	CProxy_BFSMultiVertex;
@@ -13,11 +22,14 @@ typedef GraphLib::Graph<
 	GraphLib::TransportType::/*Tram*/Charm
 	> BFSGraph;
 
-#include "charm_multivertex_bfs_async.decl.h"
+#include "tram_multivertex_parallel_search.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
 CProxy_TestDriver driverProxy;
+CProxy_ArrayMeshStreamer<dtype, long long, BFSMultiVertex,
+                         SimpleMeshRouter> aggregator;
+const int numMsgsBuffered = 1024;
 
 struct BFSEdge {
 	CmiUInt8 v;
@@ -31,18 +43,22 @@ struct BFSEdge {
 
 class BFSVertex {
 	private:
+		CmiUInt8 thisIndex;
 		std::vector<BFSEdge> adjlist;
 		bool visited;
 		CmiUInt8 parent;
 		CmiUInt8 numScannedEdges;
 
 	public:
-		BFSVertex() : visited(false), parent(-1), numScannedEdges(0) {}
+		BFSVertex() : thisIndex(-1), visited(false), 
+			parent(-1), numScannedEdges(0) {}
+		BFSVertex(CmiUInt8 idx) : thisIndex(idx), visited(false), 
+			parent(-1), numScannedEdges(0) {}
 		void connectVertex(const BFSEdge & edge) {
 			adjlist.push_back(edge);
 		}
 		//...
-		void update(BFSMultiVertex & multiVertex); 
+		void update(BFSMultiVertex & multiVertex, const dtype & data); 
 		void verify(BFSMultiVertex & multiVertex); 
 		void check(); 
 		const CmiUInt8 getScannedEdgesNum() { return numScannedEdges; }
@@ -52,15 +68,17 @@ class BFSVertex {
 class BFSMultiVertex : public CBase_BFSMultiVertex {
 	private:
 		std::vector<BFSVertex> vertices;
-		std::deque<CmiUInt8> q;
+		std::deque<dtype> q;
 
 	public:
 		BFSMultiVertex() {
-			vertices.assign(N / ckGetArraySize(), BFSVertex());
+			//vertices.assign(N / ckGetArraySize(), BFSVertex());
+			for(CmiUInt8 i = 0; i < N / ckGetArraySize(); i++)
+				vertices.push_back(BFSVertex(getBase() + i));
 		}
-		BFSMultiVertex(CmiUInt8 n) {
+		/*BFSMultiVertex(CmiUInt8 n) {
 			vertices.assign(n, BFSVertex());
-		}
+		}*/
 
 		void connectVertex(const std::pair<CmiUInt8, BFSEdge> & edge) {
 			vertices[getLocalIndex(edge.first)].connectVertex(edge.second);
@@ -72,17 +90,19 @@ class BFSMultiVertex : public CBase_BFSMultiVertex {
 
 		BFSMultiVertex(CkMigrateMessage *msg) {}
 
-		inline std::deque<CmiUInt8> & getQ() { return q; }
+		inline std::deque<dtype> & getQ() { return q; }
 
-		void update(const CmiUInt8 & v) {
+		void make_root(const CmiUInt8 & root) {
+			process(dtype(root, root)); 
+		}
 
-			q.push_back(v);
+		inline void process(const dtype & data) {
+			q.push_back(data);
 			while (!q.empty()) {
-				CmiUInt8 u = q.front();
-				CkAssert(getBaseIndex(u) == thisIndex);
-
+				dtype d = q.front();
+				CkAssert(getBaseIndex(d.v) == thisIndex);
 				q.pop_front();
-				vertices[getLocalIndex(u)].update(*this);
+				vertices[getLocalIndex(d.v)].update(*this, d);
 			}
 		}
 
@@ -91,10 +111,10 @@ class BFSMultiVertex : public CBase_BFSMultiVertex {
 			for (Iterator it = vertices.begin(); it != vertices.end(); it++) 
 				it->verify(*this);
 			while (!q.empty()) {
-				CmiUInt8 u = q.front();
-				CkAssert(getBaseIndex(u) == thisIndex);
+				dtype d = q.front();
+				CkAssert(getBaseIndex(d.v) == thisIndex);
 				q.pop_front();
-				vertices[getLocalIndex(u)].check();
+				vertices[getLocalIndex(d.v)].check();
 			}
 		}
 
@@ -131,22 +151,32 @@ class BFSMultiVertex : public CBase_BFSMultiVertex {
 		inline CmiUInt8 getLocalIndex(const CmiUInt8 & gIdx) { 
 			return gIdx % (N / ckGetArraySize()); 
 		}
+		inline CmiUInt8 getBase() { 
+			return thisIndex * (N / ckGetArraySize()); 
+		}
+
+		void foo() {} 
 };
 
-void BFSVertex::update(BFSMultiVertex & multiVertex) {
+void BFSVertex::update(BFSMultiVertex & multiVertex, const dtype & data) {
 	if (visited)
 		return;
 
-	std::deque<CmiUInt8> & q = multiVertex.getQ();
+	std::deque<dtype> & q = multiVertex.getQ();
 	CProxy_BFSMultiVertex & thisProxy = multiVertex.thisProxy; 
 	visited = true;
+	this->parent = data.parent;
 
 	typedef typename std::vector<BFSEdge>::iterator Iterator; 
+	ArrayMeshStreamer<dtype, long long, BFSMultiVertex, SimpleMeshRouter>
+		* localAggregator = aggregator.ckLocalBranch();
+
 	for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 		if (multiVertex.isLocalIndex(it->v))
-			q.push_back(it->v);
+			q.push_back(dtype(it->v, thisIndex));
 		else
-			thisProxy[multiVertex.getBaseIndex(it->v)].update(it->v);
+			//thisProxy[multiVertex.getBaseIndex(it->v)].update(it->v);
+      localAggregator->insertData(dtype(it->v, thisIndex), multiVertex.getBaseIndex(it->v));
 		numScannedEdges++;
 	}
 }
@@ -154,12 +184,12 @@ void BFSVertex::update(BFSMultiVertex & multiVertex) {
 void BFSVertex::verify(BFSMultiVertex & multiVertex) {
 	if (!visited)
 		return;
-	std::deque<CmiUInt8> & q = multiVertex.getQ();
+	std::deque<dtype> & q = multiVertex.getQ();
 	CProxy_BFSMultiVertex & thisProxy = multiVertex.thisProxy; 
 	typedef typename std::vector<BFSEdge>::iterator Iterator; 
 	for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 		if (multiVertex.isLocalIndex(it->v))
-			q.push_back(it->v);
+			q.push_back(dtype(it->v, thisIndex));
 		else
 			thisProxy[multiVertex.getBaseIndex(it->v)].check(it->v);
 	}
@@ -191,13 +221,20 @@ public:
 		parseCommandOptions(args->argc, args->argv, opts);
     N = opts.N;
 		M = opts.M;
-		root = opts.root;
     driverProxy = thishandle;
 
     // Create graph
     graph = new BFSGraph(CProxy_BFSMultiVertex::ckNew(CmiNumPes()));
 		// create graph generator
 		generator = new Generator(*graph, opts);
+
+    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
+    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
+
+    // Instantiate communication library group with a handle to the client
+    aggregator =
+      CProxy_ArrayMeshStreamer<dtype, long long, BFSMultiVertex, SimpleMeshRouter>
+      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
 
     starttime = CkWallTimer();
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
@@ -222,9 +259,16 @@ public:
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
+		root = random() % N;
+		CkPrintf("root=%lld\n", root);
     starttime = CkWallTimer();
-		CkPrintf("start test, root=%lld\n", root);
-		g[root / (N / CmiNumPes())].update(root);
+
+		g[root / (N / CmiNumPes())].make_root(root);
+    //CkCallback startCb(CkIndex_BFSMultiVertex::make_root(root), g[root / (N / CmiNumPes())]);
+    CkCallback startCb(CkIndex_BFSMultiVertex::foo(), g[root / (N / CmiNumPes())]);
+    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
@@ -240,10 +284,8 @@ public:
 				N, 100.0*total/N, M, 100.0*total/M, root);
 
 		if (total < 0.25 * N) {
-			//root = rand_64(gen) % N;
-			root = rand() % N;
 			starttime = CkWallTimer();
-			CkPrintf("restart test, root=%lld\n", root);
+			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
@@ -267,4 +309,4 @@ public:
 	}
 };
 
-#include "charm_multivertex_bfs_async.def.h"
+#include "tram_multivertex_parallel_search.def.h"

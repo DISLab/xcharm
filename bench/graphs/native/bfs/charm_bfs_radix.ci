@@ -1,40 +1,35 @@
-mainmodule tram_bfs_sync {
+mainmodule charm_bfs_radix {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
   readonly int                             K;
-  // Graph size (number of vertices)
-  readonly CmiUInt8                        N;
+  // Graph size (number of vertices and number of edges)
+  readonly CmiUInt8                         N;
+	readonly CmiUInt8 												M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
-  // Handle to the communication library (group)
-  readonly CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
-                                    SimpleMeshRouter> aggregator;
+
+	class BFSVertex_PackedData;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
     entry [reductiontarget] void start();
-		entry void startVerificationPhase();
+		entry [reductiontarget] void startGraphConstruction();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-		entry void startGraphConstruction();
-		entry void exit();
+		entry [reductiontarget] void resume();
+    entry [reductiontarget] void exit();
+		entry void grayVertexExist();
   };
 
 	class BFSEdge;
   array [1D] BFSVertex {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry void make_root(); 
-		entry void getScannedVertexNum();
-		entry void verify();
-		entry void check(int level);
-		entry [threaded] void process(const dtype & m);
+		entry void make_root();
+		entry void update(int level, CmiUInt8 parent, int r); 
+		entry void resume();
+		entry void getScannedEdgesNum();
   };
-
-  // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<dtype, long long> >;
-  group ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
 
 	// Setup required for the graph generation library
   message MeshStreamerMessage<ArrayDataItem<BFSEdge, long long> >;

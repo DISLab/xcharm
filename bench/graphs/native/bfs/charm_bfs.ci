@@ -1,34 +1,32 @@
-mainmodule charm_bfs_async_radix {
+mainmodule charm_bfs {
 	extern module GraphGenerator;
 
   // Mean arrity of the graph 
   readonly int                             K;
-  // Graph size (number of vertices and number of edges)
+  // Graph size (number of vertices)
   readonly CmiUInt8                         N;
-	readonly CmiUInt8 												M;
+  readonly CmiUInt8                         M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
     entry [reductiontarget] void start();
-		entry [reductiontarget] void startGraphConstruction();
+		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-		entry [reductiontarget] void resume();
-    entry [reductiontarget] void exit();
-		entry void grayVertexExist();
+		entry void startGraphConstruction();
+		entry void exit();
   };
 
 	class BFSEdge;
   array [1D] BFSVertex {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry [reentrant] void update(int r); 
-		entry [reentrant] void resume();
-		entry void getScannedEdgesNum();
+		entry void make_root();
+		entry void update(int level, CmiUInt8 parent); 
 		entry void getScannedVertexNum();
 		entry void verify();
-		entry void check();
+		entry void check(int level);
   };
 
 	// Setup required for the graph generation library

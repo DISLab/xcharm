@@ -1,4 +1,4 @@
-mainmodule tram_bfs_async_radix {
+mainmodule tram_parallel_search_radix {
 	extern module GraphGenerator;
 	extern module NDMeshStreamer;
 

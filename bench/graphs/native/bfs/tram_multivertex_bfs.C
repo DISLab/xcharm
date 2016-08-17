@@ -22,7 +22,7 @@ typedef GraphLib::Graph<
 	GraphLib::TransportType::/*Tram*/Charm
 	> BFSGraph;
 
-#include "tram_multivertex_bfs_sync.decl.h"
+#include "tram_multivertex_bfs.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
@@ -225,7 +225,6 @@ public:
 		parseCommandOptions(args->argc, args->argv, opts);
     N = opts.N;
 		M = opts.M;
-		root = opts.root;
     driverProxy = thishandle;
 
     // Create graph
@@ -264,8 +263,9 @@ public:
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
+		root = random() % N;
+		CkPrintf("root=%lld\n", root);
     starttime = CkWallTimer();
-		CkPrintf("start test, root=%lld\n", root);
 
     CkCallback startCb(CkIndex_BFSMultiVertex::foo(), g[root / (N / CmiNumPes())]);
     CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
@@ -288,10 +288,8 @@ public:
 				N, 100.0*total/N, M, 100.0*total/M, root);
 
 		if (total < 0.25 * N) {
-			//root = rand_64(gen) % N;
-			root = rand() % N;
 			starttime = CkWallTimer();
-			CkPrintf("restart test, root=%lld\n", root);
+			CkPrintf("restart test\n");
 			driverProxy.start();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
@@ -315,4 +313,4 @@ public:
 	}
 };
 
-#include "tram_multivertex_bfs_sync.def.h"
+#include "tram_multivertex_bfs.def.h"
