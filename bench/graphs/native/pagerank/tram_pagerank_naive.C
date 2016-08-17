@@ -28,6 +28,7 @@ typedef GraphLib::Graph<
 
 CmiUInt8 N;
 double D;
+int iters = 4;
 CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, long long, PageRankVertex,
                          SimpleMeshRouter> aggregator;
@@ -168,7 +169,7 @@ public:
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
     starttime = CkWallTimer();
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < iters; i++) {
 			CkPrintf("PageRank step %d:\n", i);
 			// do pagerank step initilization
 			g.doPageRankStep_init();

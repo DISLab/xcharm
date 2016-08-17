@@ -17,6 +17,7 @@ typedef GraphLib::Graph<
 CmiUInt8 N;
 double D;
 CProxy_TestDriver driverProxy;
+int iters = 4;
 
 struct PageRankEdge {
 	CmiUInt8 v;
@@ -138,7 +139,7 @@ public:
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
 		while(1){}
     starttime = CkWallTimer();
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < iters; i++) {
 			CkPrintf("PageRank step %d:\n", i);
 			// do pagerank step initilization
 			g.doPageRankStep_init();

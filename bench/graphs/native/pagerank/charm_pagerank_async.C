@@ -17,6 +17,7 @@ typedef GraphLib::Graph<
 CmiUInt8 N;
 double D;
 CProxy_TestDriver driverProxy;
+int iters = 4;
 
 struct PageRankEdge {
 	CmiUInt8 v;
@@ -75,7 +76,7 @@ public:
 
 		if (sumInPageRankValues[iter].first == adjlist.size()) {
 			rank = (1.0 - D)/N + sumInPageRankValues[iter].second;
-			if (iter + 1 < 3) {
+			if (iter + 1 < iters) {
 				typedef typename std::vector<PageRankEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					thisProxy[it->v].update(iter + 1, rank / adjlist.size());
