@@ -13,7 +13,8 @@ mainmodule tram_parallel_search {
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
+    entry void start();
+    entry void restart();
 		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
     //entry void startVerificationPhase();

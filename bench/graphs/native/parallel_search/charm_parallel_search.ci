@@ -11,11 +11,12 @@ mainmodule charm_parallel_search {
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
+    entry void start();
+    entry void restart();
 		entry void startVerificationPhase();
-    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-    //entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 total);
 		entry void startGraphConstruction();
+    entry void exit();
   };
 
 	class BFSEdge;
@@ -25,6 +26,7 @@ mainmodule charm_parallel_search {
 		entry void update(); 
 		entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
+		entry void print();
   };
 
 	// Setup required for the graph generation library

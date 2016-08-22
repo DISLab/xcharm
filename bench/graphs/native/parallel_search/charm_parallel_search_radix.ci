@@ -11,9 +11,10 @@ mainmodule charm_parallel_search_radix {
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
+    entry void start();
+    entry void restart();
 		entry [reductiontarget] void startGraphConstruction();
-    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    entry [reductiontarget] void done(CmiUInt8 total);
 		entry [reductiontarget] void resume();
     entry [reductiontarget] void exit();
 		entry void grayVertexExist();

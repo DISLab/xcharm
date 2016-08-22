@@ -174,12 +174,27 @@ public:
 
 
   void start() {
+		srandom(1);
 		BFSGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
 		root = random() % N;
-		CkPrintf("root=%lld\n", root);
+		CkPrintf("start, root=%lld\n", root);
+    starttime = CkWallTimer();
+
+		//g[root].make_root();
+    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+
+		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+  }
+
+  void restart() {
+		BFSGraph::Proxy & g = graph->getProxy();
+		root = random() % N;
+		CkPrintf("restart, root=%lld\n", root);
     starttime = CkWallTimer();
 
 		//g[root].make_root();
@@ -200,9 +215,7 @@ public:
 		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
 				N, 100.0*total/N, M, 100.0*total/M, root);
 		if (total < 0.25 * N) {
-			starttime = CkWallTimer();
-			CkPrintf("restart test, root=%lld\n", root);
-			driverProxy.start();
+			driverProxy.restart();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
 			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;

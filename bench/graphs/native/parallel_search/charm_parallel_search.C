@@ -74,6 +74,15 @@ public:
 				CkCallback(CkReductionTarget(TestDriver, done),
 					driverProxy));
 	}
+
+	void print() {
+		typedef typename std::vector<BFSEdge>::iterator Iterator; 
+		CkPrintf("vid:%lld (", thisIndex);
+		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) { 
+			CkPrintf("%lld,", it->v);
+		}
+		CkPrintf(")\n");
+	}
 };
 
 
@@ -124,16 +133,26 @@ public:
 
 
   void start() {
+		srandom(1);
 		BFSGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
 		root = random() % N;
-		CkPrintf("root=%lld\n", root);
+		CkPrintf("start, root=%lld\n", root);
     starttime = CkWallTimer();
 		g[root].update();
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
+
+	void restart() {
+		BFSGraph::Proxy & g = graph->getProxy();
+		root = random() % N;
+		CkPrintf("restart, root=%lld\n", root);
+    starttime = CkWallTimer();
+		g[root].update();
+		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
+	}
 
   void startVerificationPhase() {
 		BFSGraph::Proxy & g = graph->getProxy();
@@ -146,9 +165,7 @@ public:
 		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
 				N, 100.0*total/N, M, 100.0*total/M, root);
 		if (total < 0.25 * N) {
-			starttime = CkWallTimer();
-			CkPrintf("restart test\n");
-			driverProxy.start();
+			driverProxy.restart();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
 			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
@@ -157,9 +174,13 @@ public:
 			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
 			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
 			//				 gteps / CkNumPes());
-			CkExit();
+			//CkExit();
+			//g.print();
+			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 		}
   }
+
+	void exit() { CkExit(); }
 };
 
 #include "charm_parallel_search.def.h"
