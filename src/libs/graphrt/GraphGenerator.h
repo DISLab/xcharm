@@ -150,10 +150,12 @@ namespace GraphLib {
 					void generate() { Generator<Graph, Opts, graphGeneratorType>::do_generate(); }
 					void addEdge(std::pair<uint64_t,uint64_t> & e) {
 						double w = drand48();
+
+						//CkPrintf("adding edge (%lld, %lld)\n", e.first, e.second);
 						ArrayMeshStreamer<Edge, long long, Vertex, SimpleMeshRouter>
 							* localAggregator = aggregator.ckLocalBranch();
 						localAggregator->insertData(Edge(e.second, w), e.first);
-						localAggregator->insertData(Edge(e.first, w), e.second);
+						//localAggregator->insertData(Edge(e.first, w), e.second);
 					}
 			};
 
