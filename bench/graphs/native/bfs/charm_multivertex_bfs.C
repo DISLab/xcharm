@@ -252,7 +252,7 @@ public:
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
-  void start() {
+  void restart() {
 		BFSGraph::Proxy & g = graph->getProxy();
 		root = random() % N;
     CkPrintf("restart, root = %lld\n", root);
