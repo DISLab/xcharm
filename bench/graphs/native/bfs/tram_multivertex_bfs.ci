@@ -15,6 +15,7 @@ mainmodule tram_multivertex_bfs {
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
     entry [reductiontarget, threaded] void start();
+    entry [reductiontarget, threaded] void restart();
 		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
     //entry void startVerificationPhase();
