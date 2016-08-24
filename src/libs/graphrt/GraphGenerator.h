@@ -180,8 +180,8 @@ namespace GraphLib {
 							* localAggregator = aggregator.ckLocalBranch();
 						localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), e.first / (opts.N / CmiNumPes()) 
 								/*FIXME: need common mapping function here*/);
-						localAggregator->insertData(std::make_pair(e.second, Edge(e.first, w)), e.second / (opts.N / CmiNumPes())
-								/*FIXME: need common mapping function here*/);
+						//localAggregator->insertData(std::make_pair(e.second, Edge(e.first, w)), e.second / (opts.N / CmiNumPes())
+						//		/*FIXME: need common mapping function here*/);
 					}
 			};
 
