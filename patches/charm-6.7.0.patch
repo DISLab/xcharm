@@ -1,0 +1,131 @@
+Only in /home/frolo/wdir/charm-6.7.0: bin
+Only in /home/frolo/wdir/charm-6.7.0: include
+Only in /home/frolo/wdir/charm-6.7.0: lib
+Only in /home/frolo/wdir/charm-6.7.0: lib_so
+Only in /home/frolo/wdir/charm-6.7.0: mpi-linux
+Only in /home/frolo/wdir/charm-6.7.0: mpi-linux-x86_64
+Only in /home/frolo/wdir/charm-6.7.0/src/ck-core: .ckarray.ci.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/ck-core: .ckarray.h.swp
+diff -ruB charm-6.7.0/src/ck-core/ckarrayindex.h /home/frolo/wdir/charm-6.7.0/src/ck-core/ckarrayindex.h
+--- charm-6.7.0/src/ck-core/ckarrayindex.h	2015-12-22 01:34:13.000000000 +0300
++++ /home/frolo/wdir/charm-6.7.0/src/ck-core/ckarrayindex.h	2016-05-23 21:00:56.502877680 +0300
+@@ -110,7 +110,7 @@
+             int i;
+             const int *d=data();
+             CkHashCode ret=d[0];
+-            for (i=1;i<nInts;i++)
++            for (i=0;i<nInts;i++)
+                 ret +=circleShift(d[i],10+11*i)+circleShift(d[i],9+7*i);
+             return ret;
+         }
+Only in /home/frolo/wdir/charm-6.7.0/src/ck-core: .cklocation.C.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/ck-core: .cklocation.h.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/conv-core: .memory.c.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/conv-core: .memory-gnu.c.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/conv-core: .memory-verbose.c.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/ampi: ampi.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/ampi: ampi.def.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/ampi: ampif.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/ampi: ampi.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/cache: CkCache.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/cache: CkCache.def.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/cache: CkCache.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/cache: INTERFACE
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/completion: completion.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/completion: completion.def.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/completion: completion.o
+diff -ruB charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.ci /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.ci
+--- charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.ci	2015-12-22 01:34:13.000000000 +0300
++++ /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.ci	2016-08-25 10:01:04.844149253 +0300
+@@ -25,6 +25,7 @@
+                     CkCallback endCb, int prio,
+                     bool usePeriodicFlushing);
+     entry void init(CkCallback endCb, int prio);
++    entry void init(int prio);
+     entry [reductiontarget] void syncInit();
+ 
+     entry void receiveAtDestination(MeshStreamerMessage<dtype> *msg);
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer: NDMeshStreamer.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer: NDMeshStreamer.def.h
+diff -ruB charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.h /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.h
+--- charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.h	2015-12-22 01:34:13.000000000 +0300
++++ /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer/NDMeshStreamer.h	2016-08-25 09:59:13.547668805 +0300
+@@ -18,7 +18,7 @@
+ #define CMK_TRAM_OVERALLOCATION_FACTOR 4
+ 
+ // #define CMK_TRAM_CACHE_ARRAY_METADATA // only works for 1D array clients
+-// #define CMK_TRAM_VERBOSE_OUTPUT
++//#define CMK_TRAM_VERBOSE_OUTPUT
+ 
+ #define TRAM_BROADCAST (-100)
+ 
+@@ -149,6 +149,7 @@
+   void init(CkArrayID senderArrayID, CkCallback startCb, CkCallback endCb,
+             int prio, bool usePeriodicFlushing);
+   void init(CkCallback startCb, int prio);
++  void init(int prio);
+ 
+   void syncInit();
+ 
+@@ -508,6 +509,22 @@
+ }
+ 
+ template <class dtype, class RouterType>
++void MeshStreamer<dtype, RouterType>::init(int prio /*= -1*/) {
++  useStagedCompletion_ = false;
++  stagedCompletionStarted_ = false;
++  useCompletionDetection_ = false;
++
++  yieldCount_ = 0;
++  userCallback_ = CkCallback();
++  prio_ = prio;
++
++  initLocalClients();
++
++  hasSentRecently_ = false;
++  enablePeriodicFlushing();
++}
++
++template <class dtype, class RouterType>
+ void MeshStreamer<dtype, RouterType>::
+ init(int numLocalContributors, CkCallback startCb, CkCallback endCb, int prio,
+      bool usePeriodicFlushing) {
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/NDMeshStreamer: NDMeshStreamer.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/ParFUM: .adapt_adj.h.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/ParFUM: .ParFUM.ci.swp
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/sparseContiguousReducer: CkSparseContiguousReducer.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/sparseContiguousReducer: CkSparseContiguousReducer.def.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/sparseContiguousReducer: cksparsecontiguousreducer.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/sparseContiguousReducer: INTERFACE
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/sparseContiguousReducer: libmoduleCkSparseContiguousReducer.a
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: compat_funs.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: compat_fus.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: compat_regmm.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: compat_uns.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: compat_us.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: tcharm.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: tcharm.def.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: tcharmmain.decl.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: tcharmmain.def.h
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: tcharmmain.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/ck-libs/tcharm: tcharm.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/conv-libs/ddt: ddt.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/conv-libs/master-slave: cms.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/conv-libs/packlib: packc.o
+Only in /home/frolo/wdir/charm-6.7.0/src/libs/conv-libs/packlib: packf77.o
+diff -ruB charm-6.7.0/src/scripts/charmc /home/frolo/wdir/charm-6.7.0/src/scripts/charmc
+--- charm-6.7.0/src/scripts/charmc	2015-12-22 01:34:13.000000000 +0300
++++ /home/frolo/wdir/charm-6.7.0/src/scripts/charmc	2016-05-27 14:14:19.498024637 +0300
+@@ -1356,7 +1356,8 @@
+ 		NU_OBJ=$BASEO
+ 		;;
+ 	*.C|*.cc|*.cxx|*.cpp|*.c++|*.cu)
+-		Do $CMK_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CXX -c $FILE $DESTO
++#Do $CMK_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CXX -c $FILE $DESTO
++		Do $CMK_CXX  $OPTS_CPP $OPTS_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL -c $FILE $DESTO
+ 		NU_OBJ=$BASEO
+ 		if [ "$Do_res" -ne 0 ]
+ 		then
+Only in /home/frolo/wdir/charm-6.7.0/src: tags
+Only in /home/frolo/wdir/charm-6.7.0: tmp
+Only in /home/frolo/wdir/charm-6.7.0: VERSION

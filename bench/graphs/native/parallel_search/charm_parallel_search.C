@@ -183,4 +183,4 @@ public:
 	void exit() { CkExit(); }
 };
 
-#include "charm_parallel_search.def.h"
+//#include "charm_parallel_search.def.h"

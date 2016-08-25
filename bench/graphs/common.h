@@ -1,6 +1,9 @@
 #ifndef __common_h__
 #define __common_h__
 
+struct Options;
+void parseCommandOptions(int argc, char **argv, Options & opts);
+
 struct Options {
 	int scale;
 	int K;
@@ -16,6 +19,10 @@ struct Options {
 		N = (1 << scale);
 		M = N * K;
 	}
+	Options(int argc, char **argv) {
+		parseCommandOptions(argc, argv, *this);
+	}
+
 	void pup(PUP::er & p) {
 		p | scale;
 		p | K;
@@ -66,5 +73,19 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 
 	while(opts.freeze) {}
 }
+
+#include <boost/random/linear_congruential.hpp>
+
+class RootSelector {
+	boost::rand48 gen;
+	boost::uniform_int<uint64_t> rand_vertex;
+
+public:
+	RootSelector(Options & opts) :
+		rand_vertex(0, opts.N-1) {}
+	CmiUInt8 select() { return rand_vertex(gen); }
+};
+
+
 
 #endif

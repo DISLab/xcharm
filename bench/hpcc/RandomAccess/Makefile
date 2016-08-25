@@ -1,4 +1,4 @@
-include ../../../config.mk
+include ../../../config2.mk
 CHARMXI=../../../bin/charmxi
 CHARMC_COMPILE_FLAGS= -g -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include $(CFLAGS)
@@ -9,7 +9,7 @@ XCHARMC_COMPILE_FLAGS=-g -I. -I../../../include -I../../../include/ucharelib -I.
 XCHARMC_LINK_FLAGS=-L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer -module completion -module ampi
 
 
-BINARY = tram_randomAccess charm_randomAccess ucharelib_randomAccess #tramx_randomAccess 
+BINARY = tram_randomAccess charm_randomAccess #ucharelib_randomAccess #tramx_randomAccess 
 
 all: $(BINARY)
 
