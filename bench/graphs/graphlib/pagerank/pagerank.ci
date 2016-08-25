@@ -43,12 +43,14 @@ mainmodule pagerank {
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Tram<PageRankGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<PageRankEdge, int, PageRankVertex, SimpleMeshRouter> >;
+		CProxy_ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter> >;
 
 	//FIXME:charmxi bug
 	group GraphLib__Generator_Charm<PageRankGraph, Options,		
+	  GraphLib::VertexMapping::SingleVertex,
 		GraphLib::GraphType::Directed,
 		GraphLib::GraphGeneratorType::Kronecker>;
 
@@ -68,4 +70,5 @@ mainmodule pagerank {
   message MeshStreamerMessage<ArrayDataItem<char/*dtype*/, int> >;
  	group ArrayMeshStreamer<char/*dtype*/, int, PageRankVertex, SimpleMeshRouter>;
   group MeshStreamer<ArrayDataItem<char/*dtype*/, int>, SimpleMeshRouter>;
+
 };
