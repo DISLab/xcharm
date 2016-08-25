@@ -111,6 +111,7 @@ public:
     driverProxy = thishandle;
 		N = opts.N;
 		D = 0.85; 
+
     // Create graph
     graph = new PageRankGraph(opts.N);
 		// Create graph generator

@@ -33,9 +33,9 @@ mainmodule pagerank {
   };
 
 	//FIXME: how to hide this piece of code 
-  message MeshStreamerMessage<ArrayDataItem<PageRankEdge, int> >;
-  group ArrayMeshStreamer<PageRankEdge, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<PageRankEdge, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<PageRankEdge, long long> >;
+  group ArrayMeshStreamer<PageRankEdge, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<PageRankEdge, long long>, SimpleMeshRouter>;
 
 	//FIXME:charmxi bug
 	array [1D] GraphLib__Vertex<PageRankVertex, PageRankEdge, GraphLib::TransportType::Charm>;
