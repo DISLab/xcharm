@@ -55,20 +55,20 @@ mainmodule pagerank {
 		GraphLib::GraphGeneratorType::Kronecker>;
 
 	//FIXME: how to hide this piece of code 
-  message MeshStreamerMessage<ArrayDataItem<int/*dtype*/, int> >;
- 	group ArrayMeshStreamer<int/*dtype*/, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<int/*dtype*/, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<int/*dtype*/, long long> >;
+ 	group ArrayMeshStreamer<int/*dtype*/, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<int/*dtype*/, long long>, SimpleMeshRouter>;
 
-  message MeshStreamerMessage<ArrayDataItem<long/*dtype*/, int> >;
- 	group ArrayMeshStreamer<long/*dtype*/, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<long/*dtype*/, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<long/*dtype*/, long long> >;
+ 	group ArrayMeshStreamer<long/*dtype*/, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<long/*dtype*/, long long>, SimpleMeshRouter>;
 
-  message MeshStreamerMessage<ArrayDataItem<double/*dtype*/, int> >;
- 	group ArrayMeshStreamer<double/*dtype*/, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<double/*dtype*/, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<double/*dtype*/, long long> >;
+ 	group ArrayMeshStreamer<double/*dtype*/, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<double/*dtype*/, long long>, SimpleMeshRouter>;
 
-  message MeshStreamerMessage<ArrayDataItem<char/*dtype*/, int> >;
- 	group ArrayMeshStreamer<char/*dtype*/, int, PageRankVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<char/*dtype*/, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<char/*dtype*/, long long> >;
+ 	group ArrayMeshStreamer<char/*dtype*/, long long, PageRankVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<char/*dtype*/, long long>, SimpleMeshRouter>;
 
 };
