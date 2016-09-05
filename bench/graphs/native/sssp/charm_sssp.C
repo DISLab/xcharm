@@ -1,9 +1,20 @@
-#include <GraphGenerator.h>
+#include <GraphLib.h>
 #include <common.h>
 #include <sstream>
 
+class SSSPVertex;
+class SSSPEdge;
+class	CProxy_SSSPVertex;
+typedef GraphLib::Graph<
+	SSSPVertex,
+	SSSPEdge,
+	CProxy_SSSPVertex,
+	GraphLib::TransportType::/*Tram*/Charm
+	> SSSPGraph;
 #include "charm_sssp.decl.h"
 
+CmiUInt8 N, M;
+int K = 16;
 CProxy_TestDriver driverProxy;
 
 struct SSSPEdge {
@@ -28,13 +39,16 @@ private:
 
 public:
   SSSPVertex() : weight(std::numeric_limits<double>::max()), parent(-1), totalUpdates(0) {
-
     // Contribute to a reduction to signal the end of the setup phase
     //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
   }
 
 	void connectVertex(const SSSPEdge & edge) {
 		adjlist.push_back(edge);
+	}
+
+	void process(const SSSPEdge & edge) {
+		connectVertex(edge);
 	}
 
   SSSPVertex(CkMigrateMessage *msg) {}
@@ -66,14 +80,10 @@ public:
 		}
   }
 
-	void countScannedVertices() {
-		CmiUInt8 c = (parent == -1 ? 0 : 1);	
-		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
+	void getScannedVertexNum() {
+		CmiUInt8 c = (parent == -1 ? 0 : 1);
+		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
 				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
-	}
-
-	void countTotalUpdates(const CkCallback & cb) {
-		contribute(sizeof(totalUpdates), &totalUpdates, CkReduction::sum_long, cb);
 	}
 
 	void verify() {
@@ -98,23 +108,33 @@ public:
 
 class TestDriver : public CBase_TestDriver {
 private:
-  CProxy_SSSPVertex  g;
 	CmiUInt8 root;
   double starttime;
 	Options opts;
 
-	CProxy_GraphGenerator<CProxy_SSSPVertex, SSSPEdge, Options> generator;
+	SSSPGraph *graph;
+	typedef GraphLib::GraphGenerator<
+		SSSPGraph, 
+		Options, 
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		GraphLib::TransportType::Tram> Generator;
+	Generator *generator;
 
 public:
   TestDriver(CkArgMsg* args) {
+		CkPrintf("TestDriver running...\n");
 		parseCommandOptions(args->argc, args->argv, opts);
-		root = opts.root;
+    N = opts.N;
+		M = opts.M;
     driverProxy = thishandle;
 
     // Create the chares storing vertices
-    g  = CProxy_SSSPVertex::ckNew(opts.N);
+    // Create graph
+    graph = new SSSPGraph(CProxy_SSSPVertex::ckNew(opts.N));
 		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_SSSPVertex, SSSPEdge, Options>::ckNew(g, opts); 
+		generator = new Generator(*graph, opts);
 
     starttime = CkWallTimer();
 		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
@@ -128,49 +148,57 @@ public:
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
 
-		generator.generate();
+		generator->generate();
 
 		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 
-
   void start() {
+		srandom(1);
+		SSSPGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-    CkPrintf("root = %lld\n", root);
+		root = random() % N;
+    CkPrintf("start, root = %lld\n", root);
     starttime = CkWallTimer();
 		g[root].make_root();
-		CkStartQD(CkIndex_TestDriver::countScannedVertices(), &thishandle);
+		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
-  void countScannedVertices() {
-		g.countScannedVertices();
+  void restart() {
+		SSSPGraph::Proxy & g = graph->getProxy();
+		root = random() % N;
+    CkPrintf("restart, root = %lld\n", root);
+    starttime = CkWallTimer();
+		g[root].make_root();
+		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
-  void done(CmiUInt8 nScanned) {
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
-		if (nScanned < 0.25 * opts.N) {
-			//root = rand_64(gen) % N;
-			root = rand() % opts.N;
-			starttime = CkWallTimer();
-			CkPrintf("Restarting test...\n");
-			driverProxy.start();
+  void startVerificationPhase() {
+		SSSPGraph::Proxy & g = graph->getProxy();
+		g.getScannedVertexNum();
+  }
+
+  void done(CmiUInt8 globalNumScannedVertices) {
+		SSSPGraph::Proxy & g = graph->getProxy();
+		CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNumScannedVertices, (double)globalNumScannedVertices*100/opts.N);
+		if (globalNumScannedVertices < 0.25 * opts.N) {
+			driverProxy.restart();
 		} else {
 			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * nScanned * 1.0/update_walltime;
+			double gteps = 1e-9 * globalNumScannedVertices * 1.0/update_walltime;
 			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
+			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNumScannedVertices, (double)globalNumScannedVertices*100/opts.N);
 			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
 			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
 			//				 gteps / CkNumPes());
 
 			//g.print();
-
-			g.countTotalUpdates(CkCallback(CkReductionTarget(TestDriver, printTotalUpdates), driverProxy));
+			//g.countTotalUpdates(CkCallback(CkReductionTarget(TestDriver, printTotalUpdates), driverProxy));
 
 			if (opts.verify) {
-				CkPrintf("Run verification...\n");
+				CkPrintf("Start verification...\n");
 				g.verify();
 			}
 			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
@@ -185,17 +213,6 @@ public:
 	void checkErrors() {
 		//g.checkErrors();
 		//CkStartQD(CkIndex_TestDriver::reportErrors(), &thishandle);
-	}
-
-  void reportErrors(CmiInt8 globalNumErrors) {
-    //CkPrintf("Found %lld errors in %lld locations (%s).\n", globalNumErrors,
-    //         tableSize, globalNumErrors <= 0.01 * tableSize ?
-    //         "passed" : "failed");
-    CkExit();
-  }
-
-	void printTotalUpdates(CmiUInt8 nUpdates) {
-		CkPrintf("nUpdates = %lld\n", nUpdates);
 	}
 };
 

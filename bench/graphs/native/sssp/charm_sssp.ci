@@ -6,12 +6,12 @@ mainmodule charm_sssp {
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-		entry void startGraphConstruction();
-    entry [reductiontarget] void start();
-		entry void countScannedVertices();
+    entry void start();
+    entry void restart();
+		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+		entry void startGraphConstruction();
 		entry void exit();
-		entry [reductiontarget] void printTotalUpdates(CmiUInt8 nUpdates);
   };
 
 	class SSSPEdge; 
@@ -20,12 +20,27 @@ mainmodule charm_sssp {
 		entry void connectVertex(const SSSPEdge & edge);
 		entry void make_root();
 		entry void update(const CmiInt8 & v, const double & w); 
-		entry void countScannedVertices();
-		entry void countTotalUpdates(const CkCallback & cb);
 		entry void verify();
+		entry void getScannedVertexNum();
 		entry void check(const double & w);
 		entry void print();
   };
 
-	group GraphGenerator<CProxy_SSSPVertex, SSSPEdge, Options>;
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<SSSPEdge, long long> >;
+  group ArrayMeshStreamer<SSSPEdge, long long, SSSPVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<SSSPEdge, long long>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<SSSPGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<SSSPEdge, long long, SSSPVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<SSSPGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
 };
