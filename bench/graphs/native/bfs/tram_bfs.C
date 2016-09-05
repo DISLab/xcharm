@@ -166,6 +166,7 @@ public:
 	}
 
   void start() {
+		srandom(1);
 		BFSGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
