@@ -1,7 +1,7 @@
 class TestDriver : public CBase_TestDriver {
 private:
 	CmiUInt8 root;
-  double starttime;
+  double starttime, totaltime;
 	Options opts;
 
 	BFSGraph *graph;
@@ -38,56 +38,45 @@ public:
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
-
 		generator->generate();
-
 		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 
 
   void start() {
 		srandom(1);
-		BFSGraph::Proxy & g = graph->getProxy();
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initializtion completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
 		root = random() % N;
     CkPrintf("start, root = %lld\n", root);
     starttime = CkWallTimer();
+		totaltime = 0;
 		graph->start(root);
-		//g[root].make_root();
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
   void restart() {
-		BFSGraph::Proxy & g = graph->getProxy();
 		root = random() % N;
     CkPrintf("restart, root = %lld\n", root);
     starttime = CkWallTimer();
-		//g[root].make_root();
 		graph->start(root);
 		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
   }
 
   void startVerificationPhase() {
-		//BFSGraph::Proxy & g = graph->getProxy();
-		//g.getScannedVertexNum();
+		totaltime += CkWallTimer() - starttime;
 		graph->getScannedVertexNum();
   }
 
-  void done(CmiUInt8 globalNumScannedVertices) {
-		BFSGraph::Proxy & g = graph->getProxy();
-		CkPrintf("globalNumScannedVertices = %lld\n", globalNumScannedVertices);
-		if (globalNumScannedVertices < 0.25 * N) {
+  void done(CmiUInt8 totalScannedVertices) {
+		CkPrintf("totalScannedVertices = %lld\n", totalScannedVertices);
+		if (totalScannedVertices < 0.25 * N) {
 			driverProxy.restart();
 		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedVertices * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld (%.0f%%)\n", globalNumScannedVertices, (double)globalNumScannedVertices*100/M);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
+			double totaltime = CkWallTimer() - starttime;
+			CkPrintf("[Final] CPU time used = %.6f seconds\n", totaltime);
+			CkPrintf("Scanned edges = %lld (%.0f%%)\n", totalScannedVertices, (double)totalScannedVertices*100/M);
 			if (opts.verify) { 
 				CkPrintf("Start verification...\n");
 				graph->verify();
