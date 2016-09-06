@@ -14,13 +14,13 @@ typedef GraphLib::Graph<
 	GraphLib::TransportType::/*Tram*/Charm
 	> SSSPGraph;
 
-#define RADIUS
-#define R 1
+#define RADIX_USED
+//#define RADIX RADIX
 
 typedef struct __dtype {
 	CmiUInt8 v;
 	double w;
-#if defined (RADIUS)
+#if defined (RADIX_USED)
 	int r;
 	__dtype (CmiUInt8 v, double w, int r) : v(v), w(w), r(r) {}
 #else
@@ -30,7 +30,7 @@ typedef struct __dtype {
 	void pup(PUP::er & p) { 
 		p | v;
 		p | w;
-#if defined (RADIUS)
+#if defined (RADIX_USED)
 		p | r;
 #endif
 	}
@@ -89,9 +89,9 @@ public:
 		// broadcast
 		typedef typename std::vector<SSSPEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-#if defined (RADIUS)
-			localAggregator->insertData(dtype(thisIndex, weight + it->w, R), it->v);
-			//thisProxy[it->v].update(dtype(thisIndex, weight + it->w, R));
+#if defined (RADIX_USED)
+			localAggregator->insertData(dtype(thisIndex, weight + it->w, RADIX), it->v);
+			//thisProxy[it->v].update(dtype(thisIndex, weight + it->w, RADIX));
 #else
 			localAggregator->insertData(dtype(thisIndex, weight + it->w), it->v);
 			//thisProxy[it->v].update(dtype(thisIndex, weight + it->w));
@@ -102,7 +102,7 @@ public:
 	inline void process(const dtype & m) {
 		const CmiUInt8 & v = m.v;
 		const double & w = m.w;
-#if defined (RADIUS)
+#if defined (RADIX_USED)
 		const int & r = m.r;
 #endif
 
@@ -121,11 +121,11 @@ public:
 			// broadcast
 			typedef typename std::vector<SSSPEdge>::iterator Iterator; 
 			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-#if defined (RADIUS)
+#if defined (RADIX_USED)
 				if (r > 0 )
 					localAggregator->insertData(dtype(thisIndex, weight + it->w, r - 1), it->v);
 				else
-					thisProxy[it->v].update(dtype(thisIndex, weight + it->w, R));
+					thisProxy[it->v].update(dtype(thisIndex, weight + it->w, RADIX));
 #else
 				localAggregator->insertData(dtype(thisIndex, weight + it->w), it->v);
 				//thisProxy[it->v].update(dtype(thisIndex, weight + it->w));
@@ -137,7 +137,7 @@ public:
 	void update(const dtype & m) {
 		const CmiUInt8 & v = m.v;
 		const double & w = m.w;
-#if defined (RADIUS)
+#if defined (RADIX_USED)
 		const int & r = m.r;
 #endif
     ArrayMeshStreamer<dtype, long long, SSSPVertex, SimpleMeshRouter>
@@ -156,11 +156,11 @@ public:
 			// broadcast
 			typedef typename std::vector<SSSPEdge>::iterator Iterator; 
 			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-#if defined (RADIUS)
+#if defined (RADIX_USED)
 				if (r > 0 )
 					localAggregator->insertData(dtype(thisIndex, weight + it->w, r - 1), it->v);
 				else
-					thisProxy[it->v].update(dtype(thisIndex, weight + it->w, R));
+					thisProxy[it->v].update(dtype(thisIndex, weight + it->w, RADIX));
 #else
 				localAggregator->insertData(dtype(thisIndex, weight + it->w), it->v);
 				//thisProxy[it->v].update(dtype(thisIndex, weight + it->w));
@@ -242,6 +242,7 @@ public:
 
   void startGraphConstruction() {
 		CkPrintf("SSSP running...\n");
+		CkPrintf("tram version, RADIX=%d\n", RADIX);
 		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
 		CkPrintf("Start graph construction:........\n");
