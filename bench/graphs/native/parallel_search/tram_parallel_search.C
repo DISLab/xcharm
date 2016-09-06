@@ -1,19 +1,21 @@
-//#define CMK_TRAM_VERBOSE_OUTPUT
-#include "NDMeshStreamer.h"
-#include "GraphLib.h"
-#include "common.h"
-
-typedef CmiUInt8 dtype;
+#include <GraphLib.h>
+#include <common.h>
 
 class BFSVertex;
 class BFSEdge;
-class	CProxy_BFSVertex;
-typedef GraphLib::Graph<
-	BFSVertex,
-	BFSEdge,
-	CProxy_BFSVertex,
-	GraphLib::TransportType::/*Tram*/Charm
-	> BFSGraph;
+class	BFSGraph;
+
+typedef struct __dtype {
+	CmiUInt8 parent; 
+	int r;
+	__dtype() {}
+  __dtype(CmiUInt8 parent, int r) : 
+		parent(parent), r(r) {}
+	void pup(PUP::er &p) {
+		p | parent;
+		p | r;
+	}
+} dtype;
 
 #include "tram_parallel_search.decl.h"
 
@@ -24,6 +26,58 @@ CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
                          SimpleMeshRouter> aggregator;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
+
+class BFSGraph : public GraphLib::Graph<
+	BFSVertex,
+	BFSEdge,
+	CProxy_BFSVertex,
+	GraphLib::TransportType::Charm> {
+public:
+	BFSGraph() : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >()	
+		{}
+	BFSGraph(CmiUInt8 nVertex) : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >(nVertex) {
+
+    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
+    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
+    aggregator =
+      CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
+      ::ckNew(numMsgsBuffered, 2, dims, g, 1);
+	}
+	BFSGraph(const CProxy_BFSVertex & g) : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >(g)	
+		{}
+	void start(CmiUInt8 root) {
+    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::exit(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+	}
+	void start(CmiUInt8 root, const CkCallback & cb) {
+    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::exit(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(cb);
+	}
+	void getScannedVertexNum() {
+		g.getScannedVertexNum();
+	}
+	void verify() {
+		g.verify();
+	}
+};
 
 struct BFSEdge {
 	CmiUInt8 v;
@@ -36,197 +90,99 @@ struct BFSEdge {
 };
 
 class BFSVertex : public CBase_BFSVertex {
-private:
-	std::vector<BFSEdge> adjlist;
-	bool visited;
-	CmiUInt8 parent;
-	CmiUInt8 numScannedEdges;
+	private:
+		std::vector<BFSEdge> adjlist;
+		enum State {White, Gray, Black} state;
+		CmiUInt8 parent;
+		CmiUInt8 numScannedEdges;
 
-public:
-  BFSVertex() : visited(false), parent(-1), numScannedEdges(0) {
-
-    // Contribute to a reduction to signal the end of the setup phase
-    //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
-  }
-
-	void process(const BFSEdge & edge) {
-		connectVertex(edge);
-	}
-
-	void connectVertex(const BFSEdge & edge) {
-		adjlist.push_back(edge);
-	}
-
-  BFSVertex(CkMigrateMessage *msg) {}
-
-  inline void process(const dtype  &parent) {
-		if (visited)
-			return;
-		//CkPrintf("%d: updated\n", thisIndex);
-		visited = true;
-		this->parent = parent;
-		typedef typename std::vector<BFSEdge>::iterator Iterator; 
-    ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
-      * localAggregator = aggregator.ckLocalBranch();
-
-		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			//thisProxy[*it].update(); 
-      localAggregator->insertData(thisIndex, it->v);
-			numScannedEdges++;
+	public:
+		BFSVertex() : state(White), parent(-1), numScannedEdges(0) {
+			// Contribute to a reduction to signal the end of the setup phase
+			//contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
 		}
-		//localAggregator->done();
-  }
 
-  void make_root() {
-		if (visited)
-			return;
-		//CkPrintf("%d: updated\n", thisIndex);
-		visited = true;
-    ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
-      * localAggregator = aggregator.ckLocalBranch();
-
-		typedef typename std::vector<BFSEdge>::iterator Iterator; 
-		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-      localAggregator->insertData(thisIndex, it->v);
-			numScannedEdges++;
+		void connectVertex(const BFSEdge & edge) {
+			if (edge.v > CkNumPes() * N) 
+				CkAbort("Incorrect dest vertex ID");
+			adjlist.push_back(edge);
 		}
-  }
 
-	void getScannedEdgesNum() {
-    contribute(sizeof(CmiUInt8), &numScannedEdges, CkReduction::sum_long,
-               CkCallback(CkReductionTarget(TestDriver, done),
-                          driverProxy));
-	}
+		void process(const BFSEdge & edge) {
+			connectVertex(edge);
+		}
 
-	void getScannedVertexNum() {
-		CmiUInt8 c = (visited ? 1 : 0);
-		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
-				CkCallback(CkReductionTarget(TestDriver, done),
-					driverProxy));
-	}
+		BFSVertex(CkMigrateMessage *msg) {}
+
+		void make_root() {
+			CkAssert(state != Gray);
+
+			if (state)
+				return;
+			state = Black;
+			parent = thisIndex;
+
+			typedef typename std::vector<BFSEdge>::iterator Iterator; 
+			ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
+				* localAggregator = aggregator.ckLocalBranch();
+			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+				localAggregator->insertData(dtype(thisIndex, RADIX), it->v);
+				//thisProxy[it->v].process(dtype(thisIndex, RADIX));
+				numScannedEdges++;
+			}
+		}
+
+		void process(const dtype &data) {
+			if (state)
+				return;
+			//CkPrintf("%d (pe=%d): updated, radius %d\n", thisIndex, getuChareSet()->getPe(), r);
+			//state = Gray;
+			parent = data.parent;
+			if (data.r > 0) {
+				state = Black;
+
+				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
+					* localAggregator = aggregator.ckLocalBranch();
+				typedef typename std::vector<BFSEdge>::iterator Iterator; 
+				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+					localAggregator->insertData(dtype(thisIndex, data.r - 1), it->v);
+					//thisProxy[it->v].process(dtype(thisIndex, data.r - 1));
+				}
+			} else {
+				//state = Gray;
+				typedef typename std::vector<BFSEdge>::iterator Iterator; 
+				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) 
+					thisProxy[it->v].process(dtype(thisIndex, RADIX));
+			}
+		}
+
+		void getScannedVertexNum() {
+			CmiUInt8 c = (state == Black ? 1 : 0);
+			contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
+					CkCallback(CkReductionTarget(TestDriver, done),
+						driverProxy));
+		}
+
+		void verify() {
+			CkAssert(state != Gray);
+			if (state == Black)
+				thisProxy[parent].check();
+		}
+
+		void check() {
+			CkAssert(state == Black);
+		}
+
+		//void foo() {}
 };
 
-class TestDriver : public CBase_TestDriver {
-private:
-	CmiUInt8 root;
-  double starttime;
-	Options opts;
+typedef GraphLib::GraphGenerator<
+BFSGraph, 
+	Options, 
+	GraphLib::VertexMapping::SingleVertex,
+	GraphLib::GraphType::Directed,
+	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::TransportType::Tram> Generator;
 
-	BFSGraph *graph;
-	typedef GraphLib::GraphGenerator<
-		BFSGraph, 
-		Options, 
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::Tram> Generator;
-	Generator *generator;
-
-public:
-  TestDriver(CkArgMsg* args) {
-		parseCommandOptions(args->argc, args->argv, opts);
-    N = opts.N;
-		M = opts.M;
-
-    driverProxy = thishandle;
-
-    // Create graph
-    graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
-		// create graph generator
-		generator = new Generator(*graph, opts);
-
-    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
-    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
-
-    // Instantiate communication library group with a handle to the client
-    aggregator =
-      CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
-
-		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
-    delete args;
-  }
-
-  void startGraphConstruction() {
-		CkPrintf("BFS running...\n");
-		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
-		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		CkPrintf("Start graph construction:........\n");
-    starttime = CkWallTimer();
-
-		// Different mechanisms of graph generation
-		
-		// 1. uchares randomly generate adjlists and connect themselves to peers 
-		//g->createGraph();
-
-		// 2. use graphio lib to load graph (not implemented)
-		//io.loadGraphToChares();
-
-		// 3. generate stream of edges in mainchare and send them to uchares
-		//CProxy_GraphGen generator = CProxy_GraphGen::ckNew(g, scale);
-
-		generator->generate();
-
-		//CkCallback cb(CkIndex_TestDriver::start(), thisProxy);
-		//uchareset_proxy.run(0, cb);
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
-	}
-
-
-  void start() {
-		srandom(1);
-		BFSGraph::Proxy & g = graph->getProxy();
-    double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("Initializtion completed:\n");
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		root = random() % N;
-		CkPrintf("start, root=%lld\n", root);
-    starttime = CkWallTimer();
-
-		//g[root].make_root();
-    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
-  }
-
-  void restart() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		root = random() % N;
-		CkPrintf("restart, root=%lld\n", root);
-    starttime = CkWallTimer();
-
-		//g[root].make_root();
-    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
-  }
-
-  void startVerificationPhase() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		//g.getScannedEdgesNum();
-		g.getScannedVertexNum();
-  }
-
-  void done(CmiUInt8 total) {
-		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
-				N, 100.0*total/N, M, 100.0*total/M, root);
-		if (total < 0.25 * N) {
-			driverProxy.restart();
-		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			//CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-			//				 gteps / CkNumPes());
-			CkExit();
-		}
-  }
-};
-
+#include "driver.C"
 #include "tram_parallel_search.def.h"

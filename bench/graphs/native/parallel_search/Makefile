@@ -13,7 +13,8 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 
 BINARY = charm_parallel_search charm_parallel_search_radix \
 				 charm_multivertex_parallel_search \
-				 tram_parallel_search tram_parallel_search_radix \
+				 tram_parallel_search_r1 tram_parallel_search_r16 tram_parallel_search_r32 tram_parallel_search_r64 \
+				 tram_parallel_search_r256 tram_parallel_search_r512 tram_parallel_search_r1024 \
 				 tram_multivertex_parallel_search
 #				 ucharelib_parallel_search ucharelib_parallel_search_radix
 
@@ -25,11 +26,33 @@ charm_parallel_search.o: charm_parallel_search.C charm_parallel_search.decl.h ch
 charm_parallel_search_radix: charm_parallel_search_radix.o
 charm_parallel_search_radix.o: charm_parallel_search_radix.C charm_parallel_search_radix.decl.h charm_parallel_search_radix.def.h
 
-tram_parallel_search: tram_parallel_search.o
-tram_parallel_search.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+tram_parallel_search_r1: tram_parallel_search_r1.o
+tram_parallel_search_r1.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=1 
 
-tram_parallel_search_radix: tram_parallel_search_radix.o
-tram_parallel_search_radix.o: tram_parallel_search_radix.C tram_parallel_search_radix.decl.h tram_parallel_search_radix.def.h
+tram_parallel_search_r16: tram_parallel_search_r16.o
+tram_parallel_search_r16.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=16 
+
+tram_parallel_search_r32: tram_parallel_search_r32.o
+tram_parallel_search_r32.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=32
+
+tram_parallel_search_r64: tram_parallel_search_r64.o
+tram_parallel_search_r64.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+
+tram_parallel_search_r256: tram_parallel_search_r256.o
+tram_parallel_search_r256.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=256
+
+tram_parallel_search_r512: tram_parallel_search_r512.o
+tram_parallel_search_r512.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=512
+
+tram_parallel_search_r1024: tram_parallel_search_r1024.o
+tram_parallel_search_r1024.o: tram_parallel_search.C tram_parallel_search.decl.h tram_parallel_search.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=1024
 
 charm_multivertex_parallel_search: charm_multivertex_parallel_search.o
 charm_multivertex_parallel_search.o: charm_multivertex_parallel_search.C charm_multivertex_parallel_search.decl.h charm_multivertex_parallel_search.def.h

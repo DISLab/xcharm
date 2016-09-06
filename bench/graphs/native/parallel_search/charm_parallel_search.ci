@@ -22,11 +22,14 @@ mainmodule charm_parallel_search {
 	class BFSEdge;
   array [1D] BFSVertex {
     entry BFSVertex();
+		entry void make_root();
 		entry void connectVertex(const BFSEdge & edge);
 		entry void update(); 
 		entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
 		entry void print();
+		entry void verify();
+		entry void check();
   };
 
 	// Setup required for the graph generation library
