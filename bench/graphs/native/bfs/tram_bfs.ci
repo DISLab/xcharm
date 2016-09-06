@@ -1,10 +1,12 @@
-mainmodule tram_bfs {
+mainmodule tram_bfs_radix {
 	extern module GraphGenerator;
+	extern module NDMeshStreamer;
 
   // Mean arrity of the graph 
   readonly int                             K;
-  // Graph size (number of vertices)
-  readonly CmiUInt8                        N;
+  // Graph size (number of vertices and number of edges)
+  readonly CmiUInt8                         N;
+	readonly CmiUInt8 												M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
   // Handle to the communication library (group)
@@ -15,21 +17,26 @@ mainmodule tram_bfs {
     entry TestDriver (CkArgMsg *args);
     entry void start();
     entry void restart();
+		entry void startGraphConstruction();
 		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-		entry void startGraphConstruction();
-		entry void exit();
+		//entry [reductiontarget] void resume();
+    entry void exit();
+		//entry void grayVertexExist();
   };
 
 	class BFSEdge;
   array [1D] BFSVertex {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
-		entry void make_root(); 
+		entry [threaded] void make_root();
+		entry void update(int level, CmiUInt8 parent, int r); 
+		entry [threaded] void process(const dtype & m);
+		//entry [threaded] void resume();
+		//entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
 		entry void verify();
 		entry void check(int level);
-		entry [threaded] void process(const dtype & m);
   };
 
   // Setup required for the communication library
