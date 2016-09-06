@@ -22,7 +22,7 @@ typedef struct __dtype {
 	}
 } dtype;
 
-#include "tram_bfs_radix.decl.h"
+#include "tram_bfs.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
@@ -179,4 +179,4 @@ class BFSVertex : public CBase_BFSVertex {
 };
 
 #include "driver.C"
-#include "tram_bfs_radix.def.h"
+#include "tram_bfs.def.h"

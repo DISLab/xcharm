@@ -1,4 +1,4 @@
-mainmodule tram_bfs_radix {
+mainmodule tram_bfs {
 	extern module GraphGenerator;
 	extern module NDMeshStreamer;
 

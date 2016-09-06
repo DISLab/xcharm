@@ -15,7 +15,6 @@ BINARY = charm_bfs \
 				 charm_multivertex_bfs \
 				 tram_bfs_r1 tram_bfs_r16 tram_bfs_r32 tram_bfs_r64 \
 				 tram_bfs_r256 tram_bfs_r512 tram_bfs_r1024 \
-				 tram_bfs \
 				 tram_multivertex_bfs
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
@@ -26,12 +25,6 @@ charm_bfs.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
 
 charm_bfs_radix: charm_bfs_radix.o
 charm_bfs_radix.o: charm_bfs_radix.C charm_bfs_radix.decl.h charm_bfs_radix.def.h
-
-tram_bfs: tram_bfs.o
-tram_bfs.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-
-tram_bfs_radix: tram_bfs_radix.o
-tram_bfs_radix.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def.h
 
 tram_bfs_r1: tram_bfs_r1.o
 tram_bfs_r1.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
@@ -51,15 +44,15 @@ tram_bfs_r64.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
 
 tram_bfs_r256: tram_bfs_r256.o
 tram_bfs_r256.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=256
 
 tram_bfs_r512: tram_bfs_r512.o
 tram_bfs_r512.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=512
 
 tram_bfs_r1024: tram_bfs_r1024.o
 tram_bfs_r1024.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=1024
 
 charm_multivertex_bfs: charm_multivertex_bfs.o
 charm_multivertex_bfs.o: charm_multivertex_bfs.C charm_multivertex_bfs.decl.h charm_multivertex_bfs.def.h
