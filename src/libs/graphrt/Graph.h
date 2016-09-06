@@ -23,7 +23,7 @@ namespace GraphLib {
 				typedef V Vertex;
 				typedef E Edge;
 				typedef CProxy_Vertex Proxy;
-			private:
+			protected:
 				CProxy_Vertex g;
 			public:
 				Graph() {}

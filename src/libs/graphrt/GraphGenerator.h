@@ -46,7 +46,7 @@ namespace GraphLib {
 				const int numMsgsBuffered = 1024;
 				int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
 				aggregator = CProxy_Aggregator::ckNew(numMsgsBuffered, 2, dims, graphProxy, 1);
-				generator = CProxy_Generator::ckNew(graphProxy, opts, aggregator);
+				generator = CProxy_Generator::ckNew(g /*graphProxy*/, opts, aggregator);
 			}
 			void generate() { 
 				CkCallback startCb(CkIndex_Generator::generate(), generator), fooCb;
@@ -72,7 +72,7 @@ namespace GraphLib {
 				const int numMsgsBuffered = 1024;
 				int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
 				aggregator = CProxy_Aggregator::ckNew(numMsgsBuffered, 2, dims, graphProxy, 1);
-				generator = CProxy_Generator::ckNew(graphProxy, opts, aggregator);
+				generator = CProxy_Generator::ckNew(g /*graphProxy*/, opts, aggregator);
 			}
 			void generate() { 
 				CkCallback startCb(CkIndex_Generator::generate(), generator), fooCb;
