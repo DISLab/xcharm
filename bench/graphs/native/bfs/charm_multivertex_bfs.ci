@@ -28,7 +28,6 @@ mainmodule charm_multivertex_bfs {
 		entry void update(const CmiUInt8 & v, const int & level, const CmiUInt8 & parent); 
 		entry void verify(); 
 		entry void check(const CmiUInt8 & v, const int & level); 
-		entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
   };
 

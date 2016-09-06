@@ -5,13 +5,6 @@ private:
 	Options opts;
 
 	BFSGraph *graph;
-	typedef GraphLib::GraphGenerator<
-		BFSGraph, 
-		Options, 
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::Tram> Generator;
 	Generator *generator;
 
 public:
@@ -23,7 +16,7 @@ public:
 
     // Create the chares storing vertices
     // Create graph
-    graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
+    graph = new BFSGraph(N);
 		// create graph generator
 		generator = new Generator(*graph, opts);
 

@@ -46,14 +46,13 @@ public:
 				CProxy_BFSVertex, 
 				GraphLib::TransportType::Charm >()	
 		{}
-	BFSGraph(const CProxy_BFSVertex & g) : 
+
+	BFSGraph(CmiUInt8 nVertex) : 
 		GraphLib::Graph<
 				BFSVertex, 
 				BFSEdge,
 				CProxy_BFSVertex, 
-				GraphLib::TransportType::Charm >(g)	{
-		//masterProxy = CProxy_Master::ckNew(g); 
-
+				GraphLib::TransportType::Charm >(nVertex) {
 		int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
 		CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
 		// Instantiate communication library group with a handle to the client
@@ -178,5 +177,12 @@ class BFSVertex : public CBase_BFSVertex {
 		}
 };
 
+typedef GraphLib::GraphGenerator<
+	BFSGraph, 
+	Options, 
+	GraphLib::VertexMapping::SingleVertex,
+	GraphLib::GraphType::Directed,
+	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::TransportType::Tram> Generator;
 #include "driver.C"
 #include "tram_bfs.def.h"

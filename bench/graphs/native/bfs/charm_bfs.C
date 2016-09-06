@@ -20,6 +20,13 @@ public:
 				CProxy_BFSVertex, 
 				GraphLib::TransportType::Charm >()	
 		{}
+	BFSGraph(CmiUInt8 nVertex) : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >(nVertex)	
+		{}
 	BFSGraph(const CProxy_BFSVertex & g) : 
 		GraphLib::Graph<
 				BFSVertex, 
@@ -116,5 +123,12 @@ public:
 	}
 };
 
+typedef GraphLib::GraphGenerator<
+	BFSGraph, 
+	Options, 
+	GraphLib::VertexMapping::SingleVertex,
+	GraphLib::GraphType::Directed,
+	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::TransportType::Tram> Generator;
 #include "driver.C"
 #include "charm_bfs.def.h"
