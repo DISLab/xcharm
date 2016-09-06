@@ -13,14 +13,7 @@ typedef struct __dtype {
 
 class BFSMultiVertex;
 class BFSEdge;
-class	CProxy_BFSMultiVertex;
-typedef GraphLib::Graph<
-	BFSMultiVertex,									// Vertex
-	//std::pair<CmiUInt8, BFSEdge>,   // Edge
-	BFSEdge,   // Edge
-	CProxy_BFSMultiVertex,
-	GraphLib::TransportType::/*Tram*/Charm
-	> BFSGraph;
+class	BFSGraph;
 
 #include "tram_multivertex_bfs.decl.h"
 
@@ -30,6 +23,55 @@ CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, long long, BFSMultiVertex,
                          SimpleMeshRouter> aggregator;
 const int numMsgsBuffered = 1024;
+
+class BFSGraph : public GraphLib::Graph<
+	BFSMultiVertex,
+	BFSEdge,
+	CProxy_BFSMultiVertex,
+	GraphLib::TransportType::Charm> {
+public:
+	BFSGraph() : 
+		GraphLib::Graph<
+				BFSMultiVertex, 
+				BFSEdge,
+				CProxy_BFSMultiVertex, 
+				GraphLib::TransportType::Charm >()
+		{}
+	BFSGraph(CmiUInt8 nVertex) : 
+		GraphLib::Graph<
+				BFSMultiVertex, 
+				BFSEdge,
+				CProxy_BFSMultiVertex, 
+				GraphLib::TransportType::Charm >(CmiNumPes())	{
+
+    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
+    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
+    aggregator =
+      CProxy_ArrayMeshStreamer<dtype, long long, BFSMultiVertex, SimpleMeshRouter>
+      ::ckNew(numMsgsBuffered, 2, dims, g, 1);
+	}
+	void start(CmiUInt8 root) {
+		CkCallback startCb(CkIndex_BFSMultiVertex::foo(), g[root / (N / CmiNumPes())]);
+		CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+		aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(CkCallbackResumeThread());
+		g[root / (N / CmiNumPes())].make_root(root);
+	}
+	void start(CmiUInt8 root, const CkCallback & cb) {
+		CkCallback startCb(CkIndex_BFSMultiVertex::foo(), g[root / (N / CmiNumPes())]);
+		CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+		aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(CkCallbackResumeThread());
+		g[root / (N / CmiNumPes())].make_root(root);
+		CkStartQD(cb);
+	}
+	void getScannedVertexNum() {
+		g.getScannedVertexNum();
+	}
+	void verify() {
+		g.verify();
+	}
+};
 
 struct BFSEdge {
 	CmiUInt8 v;
@@ -203,128 +245,13 @@ void BFSVertex::check(int level) {
 	CkAssert(this->level == level - 1);
 }
 
+typedef GraphLib::GraphGenerator<
+	BFSGraph, 
+	Options, 
+	GraphLib::VertexMapping::MultiVertex,
+	GraphLib::GraphType::Directed,
+	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::TransportType::Tram> Generator;
 
-class TestDriver : public CBase_TestDriver {
-private:
-	CmiUInt8 root;
-  double starttime;
-	Options opts;
-
-	BFSGraph *graph;
-	typedef GraphLib::GraphGenerator<
-		BFSGraph, 
-		Options, 
-		GraphLib::VertexMapping::MultiVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::Tram> Generator;
-	Generator *generator;
-
-public:
-  TestDriver(CkArgMsg* args) {
-		parseCommandOptions(args->argc, args->argv, opts);
-    N = opts.N;
-		M = opts.M;
-    driverProxy = thishandle;
-
-    // Create graph
-    graph = new BFSGraph(CProxy_BFSMultiVertex::ckNew(CmiNumPes()));
-		// create graph generator
-		generator = new Generator(*graph, opts);
-
-    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
-    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
-
-    // Instantiate communication library group with a handle to the client
-    aggregator =
-      CProxy_ArrayMeshStreamer<dtype, long long, BFSMultiVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
-
-    starttime = CkWallTimer();
-		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
-    delete args;
-  }
-
-  void startGraphConstruction() {
-		CkPrintf("BFS running...\n");
-		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
-		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		CkPrintf("Start graph construction:........\n");
-    starttime = CkWallTimer();
-
-		generator->generate();
-
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
-	}
-
-
-  void start() {
-		srandom(1);
-		BFSGraph::Proxy & g = graph->getProxy();
-    double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("Initializtion completed:\n");
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		root = random() % N;
-		CkPrintf("start, root=%lld\n", root);
-    starttime = CkWallTimer();
-
-    CkCallback startCb(CkIndex_BFSMultiVertex::foo(), g[root / (N / CmiNumPes())]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-		CkStartQD(CkCallbackResumeThread());
-
-		g[root / (N / CmiNumPes())].make_root(root);
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
-  }
-
-  void restart() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		root = random() % N;
-		CkPrintf("restart, root=%lld\n", root);
-    starttime = CkWallTimer();
-
-    CkCallback startCb(CkIndex_BFSMultiVertex::foo(), g[root / (N / CmiNumPes())]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-		CkStartQD(CkCallbackResumeThread());
-
-		g[root / (N / CmiNumPes())].make_root(root);
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
-  }
-
-  void startVerificationPhase() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		//g.getScannedEdgesNum();
-		g.getScannedVertexNum();
-  }
-
-	void done(CmiUInt8 total) {
-		BFSGraph::Proxy & g = graph->getProxy();
-		CkPrintf("total = %lld, N = %lld(%2f%%), M = %lld(%2f%%), root = %lld\n", total, 
-				N, 100.0*total/N, M, 100.0*total/M, root);
-
-		if (total < 0.25 * N) {
-			driverProxy.restart();
-		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			//double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			//CkPrintf("Scanned edges = %lld (%.0f%%)\n", globalNumScannedEdges, (double)globalNumScannedEdges*100/M);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-			//				 gteps / CkNumPes());
-			if (opts.verify) { 
-				CkPrintf("Start verification...\n");
-				g.verify();
-			}
-			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
-		}
-  }
-
-	void exit() {
-		CkPrintf("Done.\n");
-		CkExit();
-	}
-};
-
+#include "driver.C"
 #include "tram_multivertex_bfs.def.h"
