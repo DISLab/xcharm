@@ -17,11 +17,12 @@ mainmodule tram_bfs_radix {
     entry TestDriver (CkArgMsg *args);
     entry void start();
     entry void restart();
-		entry [reductiontarget] void startGraphConstruction();
+		entry void startGraphConstruction();
+		entry void startVerificationPhase();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-		entry [reductiontarget] void resume();
-    entry [reductiontarget] void exit();
-		entry void grayVertexExist();
+		//entry [reductiontarget] void resume();
+    entry void exit();
+		//entry void grayVertexExist();
   };
 
 	class BFSEdge;
@@ -29,10 +30,10 @@ mainmodule tram_bfs_radix {
     entry BFSVertex();
 		entry void connectVertex(const BFSEdge & edge);
 		entry [threaded] void make_root();
-		//entry [reentrant] void update(int r); 
+		entry void update(int level, CmiUInt8 parent, int r); 
 		entry [threaded] void process(const dtype & m);
-		entry [threaded] void resume();
-		entry void getScannedEdgesNum();
+		//entry [threaded] void resume();
+		//entry void getScannedEdgesNum();
 		entry void getScannedVertexNum();
 		entry void verify();
 		entry void check(int level);

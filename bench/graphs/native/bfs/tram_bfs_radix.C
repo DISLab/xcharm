@@ -3,13 +3,10 @@
 
 class BFSVertex;
 class BFSEdge;
-class	CProxy_BFSVertex;
-typedef GraphLib::Graph<
-	BFSVertex,
-	BFSEdge,
-	CProxy_BFSVertex,
-	GraphLib::TransportType::/*Tram*/Charm
-	> BFSGraph;
+class	BFSGraph;
+
+#define RADIX_ENABLED
+//#define RADIX 1
 
 typedef struct __dtype {
 	int level;
@@ -29,13 +26,59 @@ typedef struct __dtype {
 
 CmiUInt8 N, M;
 int K = 16;
-//int R = 128;
-int R = 2;
 CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
                          SimpleMeshRouter> aggregator;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
+
+class BFSGraph : public GraphLib::Graph<
+	BFSVertex,
+	BFSEdge,
+	CProxy_BFSVertex,
+	GraphLib::TransportType::Charm> {
+
+public:
+	BFSGraph() : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >()	
+		{}
+	BFSGraph(const CProxy_BFSVertex & g) : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >(g)	{
+		//masterProxy = CProxy_Master::ckNew(g); 
+
+		int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
+		CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
+		// Instantiate communication library group with a handle to the client
+		aggregator =
+			CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
+			::ckNew(numMsgsBuffered, 2, dims, g, 1);
+	}
+	void start(CmiUInt8 root) {
+    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+	}
+	void start(CmiUInt8 root, const CkCallback & cb) {
+    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(cb);
+	}
+	void getScannedVertexNum() {
+		g.getScannedVertexNum();
+	}
+	void verify() {
+		g.verify();
+	}
+};
 
 struct BFSEdge {
 	CmiUInt8 v;
@@ -84,15 +127,12 @@ class BFSVertex : public CBase_BFSVertex {
 
 			typedef typename std::vector<BFSEdge>::iterator Iterator; 
 			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-				localAggregator->insertData(dtype(this->level, thisIndex, R), it->v);
+				localAggregator->insertData(dtype(this->level, thisIndex, RADIX), it->v);
 				numScannedEdges++;
 			}
 		}
 
-		void process(const dtype &data) {
-			const int & level = data.level;
-			const CmiUInt8 & parent = data.parent;
-			const int & r = data.r;
+		void update(int level, CmiUInt8 parent, int r) {
 
 			if ((this->level >= 0) && (this->level <= level + 1))
 				return;
@@ -102,37 +142,24 @@ class BFSVertex : public CBase_BFSVertex {
 
 			if (r > 0) {
 				state = Black;
-				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
+				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					localAggregator->insertData(dtype(this->level, thisIndex, r - 1), it->v);
-					numScannedEdges++;
 				}
 			} else {
 				state = Gray;
-				driverProxy.grayVertexExist();
-			}
-		}
-
-		void resume() {
-			if (state == Gray) {
-				state = Black;
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
-				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
-					* localAggregator = aggregator.ckLocalBranch();
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-					//thisProxy[it->v].update(R);
-					localAggregator->insertData(dtype(this->level, thisIndex, R), it->v);
-					numScannedEdges++;
+					thisProxy[it->v].update(this->level, thisIndex, RADIX);
 				}
+				//driverProxy.grayVertexExist();
 			}
 		}
 
-		void getScannedEdgesNum() {
-			contribute(sizeof(CmiUInt8), &numScannedEdges, CkReduction::sum_long,
-					CkCallback(CkReductionTarget(TestDriver, done),
-						driverProxy));
+		void process(const dtype &data) {
+			update(data.level, data.parent, data.r);
 		}
 
 		void getScannedVertexNum() {
@@ -151,135 +178,5 @@ class BFSVertex : public CBase_BFSVertex {
 		}
 };
 
-
-class TestDriver : public CBase_TestDriver {
-private:
-	CmiUInt8 root;
-  double starttime, startt;
-	double endt;
-	bool complete;
-	Options opts;
-
-	BFSGraph *graph;
-	typedef GraphLib::GraphGenerator<
-		BFSGraph, 
-		Options, 
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::Tram> Generator;
-	Generator *generator;
-
-public:
-  TestDriver(CkArgMsg* args) : complete(false) {
-		parseCommandOptions(args->argc, args->argv, opts);
-		N = opts.N;
-		M = opts.M;
-    driverProxy = thishandle;
-
-    // Create graph
-    graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
-		// create graph generator
-		generator = new Generator(*graph, opts);
-
-    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
-    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
-
-    // Instantiate communication library group with a handle to the client
-    aggregator =
-      CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
-
-    starttime = CkWallTimer();
-		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
-
-    delete args;
-  }
-
-  void startGraphConstruction() {
-		CkPrintf("BFS running...\n");
-		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
-		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		CkPrintf("Start graph construction:........\n");
-    starttime = CkWallTimer();
-
-		generator->generate();
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
-	}
-
-  void start() {
-		srandom(1);
-		BFSGraph::Proxy & g = graph->getProxy();
-    double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("Initializtion completed:\n");
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		CkPrintf("Start breadth-first search:......\n");
-		root = random() % N;
-    CkPrintf("start, root = %lld\n", root);
-    starttime = CkWallTimer();
-
-    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::exit(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
-		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
-  }
-
-  void restart() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		root = random() % N;
-    CkPrintf("restart, root = %lld\n", root);
-    starttime = CkWallTimer();
-
-    CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::exit(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
-		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
-  }
-
-	void resume() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		if (!complete) {
-			complete = true;
-			g.resume();
-			CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
-		}
-		else startVerificationPhase();
-	}
-
-	void grayVertexExist() {
-		complete = false;
-	}
-
-  void startVerificationPhase() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		g.getScannedEdgesNum();
-  }
-
-  void done(CmiUInt8 globalNumScannedEdges) {
-		BFSGraph::Proxy & g = graph->getProxy();
-		if (globalNumScannedEdges < 0.25 * M) {
-			driverProxy.restart();
-		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
-			if (opts.verify) { 
-				CkPrintf("Start verification...\n");
-				g.verify();
-			}
-			CkExit();
-		}
-  }
-
-	void exit() {
-		CkAbort("exit: must be never called\n");
-	}
-};
-
+#include "driver.C"
 #include "tram_bfs_radix.def.h"

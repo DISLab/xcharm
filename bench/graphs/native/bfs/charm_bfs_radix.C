@@ -3,13 +3,7 @@
 
 class BFSVertex;
 class BFSEdge;
-class	CProxy_BFSVertex;
-typedef GraphLib::Graph<
-	BFSVertex,
-	BFSEdge,
-	CProxy_BFSVertex,
-	GraphLib::TransportType::/*Tram*/Charm
-	> BFSGraph;
+class BFSGraph;
 
 #include "charm_bfs_radix.decl.h"
 
@@ -18,6 +12,44 @@ int K = 16;
 //int R = 128;
 int R = 64;
 CProxy_TestDriver driverProxy;
+CProxy_Master masterProxy;
+
+class BFSGraph : public GraphLib::Graph<
+	BFSVertex,
+	BFSEdge,
+	CProxy_BFSVertex,
+	GraphLib::TransportType::Charm> {
+
+public:
+	BFSGraph() : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >()	
+		{}
+	BFSGraph(const CProxy_BFSVertex & g) : 
+		GraphLib::Graph<
+				BFSVertex, 
+				BFSEdge,
+				CProxy_BFSVertex, 
+				GraphLib::TransportType::Charm >(g)	{
+		masterProxy = CProxy_Master::ckNew(g); 
+	}
+	void start(CmiUInt8 root) {
+		g[root].make_root();
+	}
+	void start(CmiUInt8 root, const CkCallback & cb) {
+		g[root].make_root();
+		CkStartQD(cb);
+	}
+	void getScannedVertexNum() {
+		g.getScannedVertexNum();
+	}
+	void verify() {
+		g.verify();
+	}
+};
 
 struct BFSEdge {
 	CmiUInt8 v;
@@ -78,9 +110,7 @@ class BFSVertex : public CBase_BFSVertex {
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 						thisProxy[it->v].update(this->level, thisIndex, r-1);
-						//CkPrintf("%d: update %d\n", thisIndex, *it);
 						numScannedEdges++;
-						//getProxy().flush();
 				}
 			} else
 				state = Gray;
@@ -92,12 +122,16 @@ class BFSVertex : public CBase_BFSVertex {
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 						thisProxy[it->v].update(this->level, thisIndex, R);
-						//CkPrintf("%d: update %d\n", thisIndex, *it);
 						numScannedEdges++;
-						//getProxy().flush();
 				}
-				driverProxy.grayVertexExist();
+				masterProxy.notify();
 			}
+		}
+
+		void getScannedVertexNum() {
+			CmiUInt8 c = (parent == -1 ? 0 : 1);
+			contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long,
+					CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
 		}
 
 		void getScannedEdgesNum() {
@@ -105,120 +139,36 @@ class BFSVertex : public CBase_BFSVertex {
 					CkCallback(CkReductionTarget(TestDriver, done),
 						driverProxy));
 		}
+
+		void verify() {
+			if ((parent != -1) && (parent != thisIndex))
+				thisProxy[parent].check(level);
+		}
+
+		void check(int level) {
+			CkAssert(this->level + 1 == level);
+		}
 };
 
-
-class TestDriver : public CBase_TestDriver {
+class Master : public CBase_Master {
 private:
-	CmiUInt8 root;
-  double starttime, startt;
-	double endt;
 	bool complete;
-	Options opts;
-
-	BFSGraph *graph;
-	typedef GraphLib::GraphGenerator<
-		BFSGraph, 
-		Options, 
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::Tram> Generator;
-	Generator *generator;
+	CProxy_BFSVertex g;
 
 public:
-  TestDriver(CkArgMsg* args) : complete(false) {
-		parseCommandOptions(args->argc, args->argv, opts);
-		N = opts.N;
-		M = opts.M;
-    driverProxy = thishandle;
-
-    // Create graph
-    graph = new BFSGraph(CProxy_BFSVertex::ckNew(opts.N));
-		// create graph generator
-		generator = new Generator(*graph, opts);
-
-    starttime = CkWallTimer();
-		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
-
-    delete args;
-  }
-
-  void startGraphConstruction() {
-		CkPrintf("BFS running...\n");
-		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
-		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		CkPrintf("Start graph construction:........\n");
-    starttime = CkWallTimer();
-
-		generator->generate();
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
-	}
-
-  void start() {
-		srandom(1);
-		BFSGraph::Proxy & g = graph->getProxy();
-    double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("Initializtion completed:\n");
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		CkPrintf("Start breadth-first search:......\n");
-		root = random() % N;
-    CkPrintf("start, root = %lld\n", root);
-    starttime = CkWallTimer();
-		g[root].make_root();
-
-		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
-  }
-
-  void restart() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		root = random() % N;
-    CkPrintf("restart, root = %lld\n", root);
-    starttime = CkWallTimer();
-		g[root].make_root();
-
-		CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
-  }
-
+	Master(CProxy_BFSVertex & g) : g(g), complete(false) {}
 	void resume() {
-		BFSGraph::Proxy & g = graph->getProxy();
 		if (!complete) {
 			complete = true;
 			g.resume();
-			CkStartQD(CkIndex_TestDriver::resume(), &thishandle);
+			CkStartQD(CkIndex_Master::resume(), &thishandle);
 		}
-		else startVerificationPhase();
+		else CkAbort("execution complete");
 	}
-
-	void grayVertexExist() {
+	void notify() {
 		complete = false;
 	}
-
-  void startVerificationPhase() {
-		BFSGraph::Proxy & g = graph->getProxy();
-		g.getScannedEdgesNum();
-  }
-
-  void done(CmiUInt8 globalNumScannedEdges) {
-
-		if (globalNumScannedEdges < 0.25 * M) {
-			driverProxy.restart();
-		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedEdges * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned edges = %lld\n", globalNumScannedEdges);
-			CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-							 gteps / CkNumPes());
-			CkExit();
-		}
-  }
-
-	void exit() {
-		CkAbort("exit: must be never called\n");
-	}
-
 };
 
+#include "driver.C"
 #include "charm_bfs_radix.def.h"

@@ -15,11 +15,10 @@ mainmodule charm_bfs_radix {
     entry TestDriver (CkArgMsg *args);
     entry void start();
     entry void restart();
-		entry [reductiontarget] void startGraphConstruction();
+		entry void startVerificationPhase();
+		entry void startGraphConstruction();
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
-		entry [reductiontarget] void resume();
-    entry [reductiontarget] void exit();
-		entry void grayVertexExist();
+    entry void exit();
   };
 
 	class BFSEdge;
@@ -30,7 +29,16 @@ mainmodule charm_bfs_radix {
 		entry void update(int level, CmiUInt8 parent, int r); 
 		entry void resume();
 		entry void getScannedEdgesNum();
+		entry void getScannedVertexNum();
+		entry void verify();
+		entry void check(int level);
   };
+
+	chare Master {
+		entry Master(CProxy_BFSVertex & g);
+		entry void resume();
+		entry void notify();
+	};
 
 	// Setup required for the graph generation library
   message MeshStreamerMessage<ArrayDataItem<BFSEdge, long long> >;

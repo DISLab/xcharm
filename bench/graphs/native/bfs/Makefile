@@ -11,9 +11,11 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = charm_bfs charm_bfs_radix \
+BINARY = charm_bfs \
 				 charm_multivertex_bfs \
-				 tram_bfs tram_bfs_radix \
+				 tram_bfs_r1 tram_bfs_r16 tram_bfs_r32 tram_bfs_r64 \
+				 tram_bfs_r256 tram_bfs_r512 tram_bfs_r1024 \
+				 tram_bfs \
 				 tram_multivertex_bfs
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
@@ -30,6 +32,34 @@ tram_bfs.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
 
 tram_bfs_radix: tram_bfs_radix.o
 tram_bfs_radix.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def.h
+
+tram_bfs_r1: tram_bfs_r1.o
+tram_bfs_r1.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=1 
+
+tram_bfs_r16: tram_bfs_r16.o
+tram_bfs_r16.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=16 
+
+tram_bfs_r32: tram_bfs_r32.o
+tram_bfs_r32.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=32
+
+tram_bfs_r64: tram_bfs_r64.o
+tram_bfs_r64.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+
+tram_bfs_r256: tram_bfs_r256.o
+tram_bfs_r256.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+
+tram_bfs_r512: tram_bfs_r512.o
+tram_bfs_r512.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
+
+tram_bfs_r1024: tram_bfs_r1024.o
+tram_bfs_r1024.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
 
 charm_multivertex_bfs: charm_multivertex_bfs.o
 charm_multivertex_bfs.o: charm_multivertex_bfs.C charm_multivertex_bfs.decl.h charm_multivertex_bfs.def.h
