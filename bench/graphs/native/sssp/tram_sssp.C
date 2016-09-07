@@ -6,13 +6,7 @@
 
 class SSSPVertex;
 class SSSPEdge;
-class	CProxy_SSSPVertex;
-typedef GraphLib::Graph<
-	SSSPVertex,
-	SSSPEdge,
-	CProxy_SSSPVertex,
-	GraphLib::TransportType::/*Tram*/Charm
-	> SSSPGraph;
+class	SSSPGraph;
 
 #define RADIX_USED
 //#define RADIX RADIX
@@ -44,6 +38,53 @@ CProxy_ArrayMeshStreamer<dtype, long long, SSSPVertex,
                          SimpleMeshRouter> aggregator;
 // Max number of keys buffered by communication library
 const int numMsgsBuffered = 1024;
+
+class SSSPGraph : public GraphLib::Graph<
+	SSSPVertex,
+	SSSPEdge,
+	CProxy_SSSPVertex,
+	GraphLib::TransportType::Charm> {
+
+public:
+	SSSPGraph() : 
+		GraphLib::Graph<
+				SSSPVertex, 
+				SSSPEdge,
+				CProxy_SSSPVertex, 
+				GraphLib::TransportType::Charm >()	
+		{}
+
+	SSSPGraph(CmiUInt8 nVertex) : 
+		GraphLib::Graph<
+				SSSPVertex, 
+				SSSPEdge,
+				CProxy_SSSPVertex, 
+				GraphLib::TransportType::Charm >(nVertex) {
+		int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
+		CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
+		// Instantiate communication library group with a handle to the client
+		aggregator =
+			CProxy_ArrayMeshStreamer<dtype, long long, SSSPVertex, SimpleMeshRouter>
+			::ckNew(numMsgsBuffered, 2, dims, g, 1);
+	}
+	void start(CmiUInt8 root) {
+    CkCallback startCb(CkIndex_SSSPVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+	}
+	void start(CmiUInt8 root, const CkCallback & cb) {
+    CkCallback startCb(CkIndex_SSSPVertex::make_root(), g[root]);
+    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(cb);
+	}
+	void getScannedVertexNum() {
+		g.getScannedVertexNum();
+	}
+	void verify() {
+		g.verify();
+	}
+};
 
 struct SSSPEdge {
 	CmiUInt8 v;
@@ -198,140 +239,12 @@ public:
 	}
 };
 
-
-class TestDriver : public CBase_TestDriver {
-private:
-	CmiUInt8 root;
-  double starttime;
-	Options opts;
-
-	SSSPGraph *graph;
-	typedef GraphLib::GraphGenerator<
-		SSSPGraph, 
-		Options, 
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		GraphLib::TransportType::Tram> Generator;
-	Generator *generator;
-
-public:
-  TestDriver(CkArgMsg* args) {
-		parseCommandOptions(args->argc, args->argv, opts);
-    N = opts.N;
-		M = opts.M;
-		root = opts.root;
-    driverProxy = thishandle;
-
-    // Create graph
-    graph = new SSSPGraph(CProxy_SSSPVertex::ckNew(opts.N));
-		// create graph generator
-		generator = new Generator(*graph, opts);
-
-    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
-    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
-
-    // Instantiate communication library group with a handle to the client
-    aggregator =
-      CProxy_ArrayMeshStreamer<dtype, long long, SSSPVertex, SimpleMeshRouter>
-      ::ckNew(numMsgsBuffered, 2, dims, graph->getProxy(), 1);
-
-		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
-    delete args;
-  }
-
-  void startGraphConstruction() {
-		CkPrintf("SSSP running...\n");
-		CkPrintf("tram version, RADIX=%d\n", RADIX);
-		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
-		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		CkPrintf("Start graph construction:........\n");
-    starttime = CkWallTimer();
-
-		generator->generate();
-
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
-	}
-
-
-  void start() {
-		srandom(1);
-		SSSPGraph::Proxy & g = graph->getProxy();
-    double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("Initialization completed:\n");
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		root = random() % N;
-		CkPrintf("start, root = %lld\n", root);
-    starttime = CkWallTimer();
-
-		//g[root].make_root();
-    CkCallback startCb(CkIndex_SSSPVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    //CkCallback endCb(CkIndex_TestDriver::foo(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
-  }
-
-  void restart() {
-		SSSPGraph::Proxy & g = graph->getProxy();
-		root = random() % N;
-    CkPrintf("restart, root = %lld\n", root);
-    starttime = CkWallTimer();
-
-		//g[root].make_root();
-    CkCallback startCb(CkIndex_SSSPVertex::make_root(), g[root]);
-    CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
-    aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
-
-		CkStartQD(CkIndex_TestDriver::startVerificationPhase(), &thishandle);
-  }
-
-  void startVerificationPhase() {
-		SSSPGraph::Proxy & g = graph->getProxy();
-		g.getScannedVertexNum();
-  }
-
-  void done(CmiUInt8 globalNumScannedVertex) {
-		SSSPGraph::Proxy & g = graph->getProxy();
-		CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNumScannedVertex, (double)globalNumScannedVertex*100/opts.N);
-		if (globalNumScannedVertex < 0.25 * opts.N) {
-			//root = rand_64(gen) % N;
-			root = rand() % opts.N;
-			starttime = CkWallTimer();
-			CkPrintf("Restarting test...\n");
-			driverProxy.restart();
-		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * globalNumScannedVertex * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", globalNumScannedVertex, (double)globalNumScannedVertex*100/opts.N);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-			//				 gteps / CkNumPes());
-
-			//print();
-
-			//g.countTotalUpdates(CkCallback(CkReductionTarget(TestDriver, printTotalUpdates), driverProxy));
-
-			if (opts.verify) {
-				CkPrintf("start verification...\n");
-				g.verify();
-			}
-			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
-		}
-  }
-
-	void exit() {
-		CkPrintf("Done. Exit.\n");
-		CkExit();
-	}
-
-	void printTotalUpdates(CmiUInt8 nUpdates) {
-		CkPrintf("nUpdates = %lld\n", nUpdates);
-	}
-
-	void foo() {CkAbort("foo called");}
-};
-
+typedef GraphLib::GraphGenerator<
+	SSSPGraph, 
+	Options, 
+	GraphLib::VertexMapping::SingleVertex,
+	GraphLib::GraphType::Directed,
+	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::TransportType::Tram> Generator;
+#include "driver.C"
 #include "tram_sssp.def.h"

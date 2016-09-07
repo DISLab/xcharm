@@ -15,7 +15,6 @@ mainmodule tram_sssp {
     entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
 		entry void startGraphConstruction();
 		entry void exit();
-		entry void foo();
   };
 
 	class SSSPEdge; 

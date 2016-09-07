@@ -1,10 +1,60 @@
-#include <GraphGenerator.h>
+#include <GraphLib.h>
 #include <common.h>
-#include <sstream>
+#include <deque>
 
-#include "charm_sssp.decl.h"
+typedef struct __dtype {
+	CmiUInt8 v;
+	double weight;
+	CmiUInt8 parent;
+	__dtype() {}
+	__dtype(CmiUInt8 v, int level, CmiUInt8 parent) : v(v), level(level), parent(parent) {}
+	void pup(PUP::er & p) { p | v; p | level; p | parent; }
+} dtype;
 
+class SSSPMultiVertex;
+class SSSPEdge;
+class	SSSPGraph;
+
+#include "charm_multivertex_sssp.decl.h"
+
+CmiUInt8 N, M;
+int K = 16;
 CProxy_TestDriver driverProxy;
+
+class SSSPGraph : public GraphLib::Graph<
+	SSSPMultiVertex,
+	SSSPEdge,
+	CProxy_SSSPMultiVertex,
+	GraphLib::TransportType::Charm> {
+public:
+	SSSPGraph() : 
+		GraphLib::Graph<
+				SSSPMultiVertex, 
+				SSSPEdge,
+				CProxy_SSSPMultiVertex, 
+				GraphLib::TransportType::Charm >()
+		{}
+	SSSPGraph(CmiUInt8 nVertex) : 
+		GraphLib::Graph<
+				SSSPMultiVertex, 
+				SSSPEdge,
+				CProxy_SSSPMultiVertex, 
+				GraphLib::TransportType::Charm >(CmiNumPes())	
+		{}
+	void start(CmiUInt8 root) {
+		g[root / (N / CmiNumPes())].make_root(root);
+	}
+	void start(CmiUInt8 root, const CkCallback & cb) {
+		g[root / (N / CmiNumPes())].make_root(root);
+		CkStartQD(cb);
+	}
+	void getScannedVertexNum() {
+		g.getScannedVertexNum();
+	}
+	void verify() {
+		g.verify();
+	}
+};
 
 struct SSSPEdge {
 	CmiUInt8 v;
@@ -14,189 +64,156 @@ struct SSSPEdge {
 	SSSPEdge(CmiUInt8 v, double w) : v(v), w(w) {}
 	void pup(PUP::er &p) { 
 		p | v; 
-		p | w;
+		p | w; 
 	}
 };
 
+class SSSPVertex {
+	private:
+		CmiUInt8 thisIndex;
+		std::vector<SSSPEdge> adjlist;
+		double weight;
+		CmiUInt8 parent;
 
-class SSSPVertex : public CBase_SSSPVertex {
-private:
-	std::vector<SSSPEdge> adjlist;
-	double weight;
-	CmiUInt8 parent;
-	CmiUInt8 totalUpdates;
+	public:
+		SSSPVertex() : thisIndex(-1), weight(std::numeric_limits<double>::max()), 
+			parent(-1) {}
+		SSSPVertex(CmiUInt8 idx) : thisIndex(idx), weight(std::numeric_limits<double>::max()), 
+			parent(-1) {}
+		void connectVertex(const SSSPEdge & edge) {
+			adjlist.push_back(edge);
+		}
+		//...
+		void update(SSSPMultiVertex & multiVertex, int level, CmiUInt8 parent); 
+		void verify(SSSPMultiVertex & multiVertex); 
+		void check(int level); 
+		const CmiUInt8 getScannedVertexNum() { return (level >= 0 ? 1 : 0); }
+};
 
-public:
-  SSSPVertex() : weight(std::numeric_limits<double>::max()), parent(-1), totalUpdates(0) {
+class SSSPMultiVertex : public CBase_SSSPMultiVertex {
+	private:
+		std::vector<SSSPVertex> vertices;
+		std::deque<dtype> q;
 
-    // Contribute to a reduction to signal the end of the setup phase
-    //contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
-  }
+	public:
+		SSSPMultiVertex() {
+			//vertices.assign(N / ckGetArraySize(), SSSPVertex());
+			for(CmiUInt8 i = 0; i < N / ckGetArraySize(); i++)
+				vertices.push_back(SSSPVertex(getBase() + i));
+		}
+		/*SSSPMultiVertex(CmiUInt8 n) {
+			vertices.assign(n, SSSPVertex());
+		}*/
 
-	void connectVertex(const SSSPEdge & edge) {
-		adjlist.push_back(edge);
-	}
+		void connectVertex(const std::pair<CmiUInt8, SSSPEdge> & edge) {
+			vertices[getLocalIndex(edge.first)].connectVertex(edge.second);
+		}
 
-  SSSPVertex(CkMigrateMessage *msg) {}
+		void process(const std::pair<CmiUInt8, SSSPEdge > & edge) {
+			connectVertex(edge);
+		}
 
-	void make_root() {
-		weight = 0;
-		parent = thisIndex;
-		// broadcast
+		SSSPMultiVertex(CkMigrateMessage *msg) {}
+
+		inline std::deque<dtype> & getQ() { return q; }
+
+		void make_root(const CmiUInt8 & root) {
+			CkAssert(getBaseIndex(root) == thisIndex);
+			update(root, 0, root);
+		}
+
+		void update(const CmiUInt8 & v, double weight, CmiUInt8 parent) {
+
+			q.push_back(dtype(v, weight, parent));
+			while (!q.empty()) {
+				dtype data = q.front();
+				CkAssert(getBaseIndex(data.v) == thisIndex);
+
+				q.pop_front();
+				vertices[getLocalIndex(data.v)].update(*this, data.weight, data.parent);
+			}
+		}
+
+		void verify() {
+			typedef std::vector<SSSPVertex>::iterator Iterator;
+			for (Iterator it = vertices.begin(); it != vertices.end(); it++) 
+				it->verify(*this);
+			while (!q.empty()) {
+				dtype data = q.front();
+				CkAssert(getBaseIndex(data.v) == thisIndex);
+				q.pop_front();
+				vertices[getLocalIndex(data.v)].check(data.level);
+			}
+		}
+
+		void check(const CmiUInt8 & v, int level) {
+			vertices[getLocalIndex(v)].check(level);
+		}
+
+		void getScannedVertexNum() {
+			CmiUInt8 numScannedVertices = 0;
+			typedef std::vector<SSSPVertex>::iterator Iterator;
+			for (Iterator it = vertices.begin(); it != vertices.end(); it++) 
+				numScannedVertices += it->getScannedVertexNum();
+			contribute(sizeof(CmiUInt8), &numScannedVertices, CkReduction::sum_long,
+								 CkCallback(CkReductionTarget(TestDriver, done),
+														driverProxy));
+		}
+
+		inline bool isLocalIndex(const CmiUInt8 & gIdx) { 
+			return thisIndex == (gIdx / (N / ckGetArraySize())); 
+		}
+		inline CmiUInt8 getBaseIndex(const CmiUInt8 & gIdx) { 
+			return gIdx / (N / ckGetArraySize()); 
+		}
+		inline CmiUInt8 getLocalIndex(const CmiUInt8 & gIdx) { 
+			return gIdx % (N / ckGetArraySize()); 
+		}
+		inline CmiUInt8 getBase() { 
+			return thisIndex * (N / ckGetArraySize()); 
+		}
+};
+
+void SSSPVertex::update(SSSPMultiVertex & multiVertex, const double & weight, CmiUInt8 parent) {
+	if (weight < this->weight) {
+		std::deque<dtype> & q = multiVertex.getQ();
+		CProxy_SSSPMultiVertex & thisProxy = multiVertex.thisProxy; 
+		this->weight = weight
+		this->parent = parent;
+
 		typedef typename std::vector<SSSPEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			thisProxy[it->v].update(thisIndex, weight + it->w);
+			if (multiVertex.isLocalIndex(it->v))
+				q.push_back(dtype(it->v, this->weight + it->weight, thisIndex));
+			else
+				thisProxy[multiVertex.getBaseIndex(it->v)].update(it->v, this->weight + it->weight, thisIndex);
 		}
 	}
+}
 
-  void update(const CmiUInt8 & v, const double & w) {
-		if (w < weight) {
-			//CkPrintf("%d: %2.2f -> %2.2f\n", thisIndex, weight, w);
-			totalUpdates++;
+void SSSPVertex::verify(SSSPMultiVertex & multiVertex) {
+	std::deque<dtype> & q = multiVertex.getQ();
+	CProxy_SSSPMultiVertex & thisProxy = multiVertex.thisProxy; 
 
-			// update current weight and parent
-			weight = w;
-			parent = v;
-
-			// broadcast
-			typedef typename std::vector<SSSPEdge>::iterator Iterator; 
-			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-				thisProxy[it->v].update(thisIndex, weight + it->w);
-			}
-		}
-  }
-
-	void countScannedVertices() {
-		CmiUInt8 c = (parent == -1 ? 0 : 1);	
-		contribute(sizeof(CmiUInt8), &c, CkReduction::sum_long, 
-				CkCallback(CkReductionTarget(TestDriver, done), driverProxy));
+	if ((parent != -1) && (parent != thisIndex)) {
+		if (multiVertex.isLocalIndex(parent))
+			q.push_back(dtype(parent, level, thisIndex));
+		else
+			thisProxy[multiVertex.getBaseIndex(parent)].check(parent, level);
 	}
+}
 
-	void countTotalUpdates(const CkCallback & cb) {
-		contribute(sizeof(totalUpdates), &totalUpdates, CkReduction::sum_long, cb);
-	}
+void SSSPVertex::check(double weight) {
+	CkAssert(this->weight < weight);
+}
 
-	void verify() {
-		if ((parent != -1) && (parent != thisIndex))
-			thisProxy[parent].check(weight);
-	}
+typedef GraphLib::GraphGenerator<
+	SSSPGraph, 
+	Options, 
+	GraphLib::VertexMapping::MultiVertex,
+	GraphLib::GraphType::Directed,
+	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::TransportType::Tram> Generator;
 
-	void check(double w) {
-		CkAssert(weight < w);
-	}
-
-	void print() {
-		std::stringstream ss;
-		typedef typename std::vector<SSSPEdge>::iterator Iterator; 
-		/*for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-			ss << '(' << it->v << ',' << it->w << ')';
-		}*/
-		CkPrintf("%d: %.2f, %lld, %s\n", thisIndex, weight, parent, ss.str().c_str());
-	}
-};
-
-
-class TestDriver : public CBase_TestDriver {
-private:
-  CProxy_SSSPVertex  g;
-	CmiUInt8 root;
-  double starttime;
-	Options opts;
-
-	CProxy_GraphGenerator<CProxy_SSSPVertex, SSSPEdge, Options> generator;
-
-public:
-  TestDriver(CkArgMsg* args) {
-		parseCommandOptions(args->argc, args->argv, opts);
-		root = opts.root;
-    driverProxy = thishandle;
-
-    // Create the chares storing vertices
-    g  = CProxy_SSSPVertex::ckNew(opts.N);
-		// create graph generator
-		generator = CProxy_GraphGenerator<CProxy_SSSPVertex, SSSPEdge, Options>::ckNew(g, opts); 
-
-    starttime = CkWallTimer();
-		CkStartQD(CkIndex_TestDriver::startGraphConstruction(), &thishandle);
-    delete args;
-  }
-
-  void startGraphConstruction() {
-		CkPrintf("SSSP running...\n");
-		CkPrintf("\tnumber of mpi processes is %d\n", CkNumPes());
-		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
-		CkPrintf("Start graph construction:........\n");
-    starttime = CkWallTimer();
-
-		generator.generate();
-
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
-	}
-
-
-  void start() {
-    double update_walltime = CkWallTimer() - starttime;
-		CkPrintf("Initialization completed:\n");
-    CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-    CkPrintf("root = %lld\n", root);
-    starttime = CkWallTimer();
-		g[root].make_root();
-		CkStartQD(CkIndex_TestDriver::countScannedVertices(), &thishandle);
-  }
-
-  void countScannedVertices() {
-		g.countScannedVertices();
-  }
-
-  void done(CmiUInt8 nScanned) {
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
-		if (nScanned < 0.25 * opts.N) {
-			//root = rand_64(gen) % N;
-			root = rand() % opts.N;
-			starttime = CkWallTimer();
-			CkPrintf("Restarting test...\n");
-			driverProxy.start();
-		} else {
-			double update_walltime = CkWallTimer() - starttime;
-			double gteps = 1e-9 * nScanned * 1.0/update_walltime;
-			CkPrintf("[Final] CPU time used = %.6f seconds\n", update_walltime);
-			CkPrintf("Scanned vertices = %lld (%.0f%%)\n", nScanned, (double)nScanned*100/opts.N);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges  per second [GTEP/s]\n", gteps);
-			//CkPrintf("%.9f Billion(10^9) Traversed edges/PE per second [GTEP/s]\n",
-			//				 gteps / CkNumPes());
-
-			//g.print();
-
-			g.countTotalUpdates(CkCallback(CkReductionTarget(TestDriver, printTotalUpdates), driverProxy));
-
-			if (opts.verify) {
-				CkPrintf("Run verification...\n");
-				g.verify();
-			}
-			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
-		}
-  }
-
-	void exit() {
-		CkPrintf("Done. Exit.\n");
-		CkExit();
-	}
-
-	void checkErrors() {
-		//g.checkErrors();
-		//CkStartQD(CkIndex_TestDriver::reportErrors(), &thishandle);
-	}
-
-  void reportErrors(CmiInt8 globalNumErrors) {
-    //CkPrintf("Found %lld errors in %lld locations (%s).\n", globalNumErrors,
-    //         tableSize, globalNumErrors <= 0.01 * tableSize ?
-    //         "passed" : "failed");
-    CkExit();
-  }
-
-	void printTotalUpdates(CmiUInt8 nUpdates) {
-		CkPrintf("nUpdates = %lld\n", nUpdates);
-	}
-};
-
-#include "charm_sssp.def.h"
+#include "driver.C"
+#include "charm_multivertex_sssp.def.h"

@@ -24,6 +24,7 @@ mainmodule charm_multivertex_parallel_search {
   array [1D] BFSMultiVertex {
     entry BFSMultiVertex();
 		entry void connectVertex(std::pair<CmiUInt8, BFSEdge> & edge);
+		entry void make_root(const CmiUInt8 & v); 
 		entry void update(const CmiUInt8 & v); 
 		entry void verify(); 
 		entry void check(const CmiUInt8 & v); 
