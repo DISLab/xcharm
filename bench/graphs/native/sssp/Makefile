@@ -11,10 +11,10 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = charm_sssp \
+BINARY = charm_sssp charm_multivertex_sssp \
 				 tram_sssp_r1 tram_sssp_r16 tram_sssp_r32 tram_sssp_r64 \
-				 tram_sssp_r256 tram_sssp_r512 tram_sssp_r1024
-#				 charm_multivertex_sssp
+				 tram_sssp_r256 tram_sssp_r512 tram_sssp_r1024 \
+				 tram_multivertex_sssp
 #				 tram_sssp tram_sssp_radix 
 #				 ucharelib_sssp_async ucharelib_sssp_async_radix
 

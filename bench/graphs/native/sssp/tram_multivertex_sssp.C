@@ -15,11 +15,14 @@ class SSSPMultiVertex;
 class SSSPEdge;
 class	SSSPGraph;
 
-#include "charm_multivertex_sssp.decl.h"
+#include "tram_multivertex_sssp.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
 CProxy_TestDriver driverProxy;
+CProxy_ArrayMeshStreamer<dtype, long long, SSSPMultiVertex,
+                         SimpleMeshRouter> aggregator;
+const int numMsgsBuffered = 1024;
 
 class SSSPGraph : public GraphLib::Graph<
 	SSSPMultiVertex,
@@ -39,12 +42,26 @@ public:
 				SSSPMultiVertex, 
 				SSSPEdge,
 				CProxy_SSSPMultiVertex, 
-				GraphLib::TransportType::Charm >(CmiNumPes())	
-		{}
+				GraphLib::TransportType::Charm >(CmiNumPes())	{
+
+    int dims[2] = {CkNumNodes(), CkNumPes() / CkNumNodes()};
+    CkPrintf("Aggregation topology: %d %d\n", dims[0], dims[1]);
+    aggregator =
+      CProxy_ArrayMeshStreamer<dtype, long long, SSSPMultiVertex, SimpleMeshRouter>
+      ::ckNew(numMsgsBuffered, 2, dims, g, 1);
+	}
 	void start(CmiUInt8 root) {
+		CkCallback startCb(CkIndex_SSSPMultiVertex::foo(), g[root / (N / CmiNumPes())]);
+		CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+		aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(CkCallbackResumeThread());
 		g[root / (N / CmiNumPes())].make_root(root);
 	}
 	void start(CmiUInt8 root, const CkCallback & cb) {
+		CkCallback startCb(CkIndex_SSSPMultiVertex::foo(), g[root / (N / CmiNumPes())]);
+		CkCallback endCb(CkIndex_TestDriver::startVerificationPhase(), driverProxy);
+		aggregator.init(g.ckGetArrayID(), startCb, endCb, -1, true);
+		CkStartQD(CkCallbackResumeThread());
 		g[root / (N / CmiNumPes())].make_root(root);
 		CkStartQD(cb);
 	}
@@ -121,18 +138,18 @@ class SSSPMultiVertex : public CBase_SSSPMultiVertex {
 
 		void make_root(const CmiUInt8 & root) {
 			CkAssert(getBaseIndex(root) == thisIndex);
-			update(root, 0, root);
+			process(dtype(root, 0, root));
 		}
 
-		void update(const CmiUInt8 & v, double weight, CmiUInt8 parent) {
+		inline void process(const dtype & data) {
 
-			q.push_back(dtype(v, weight, parent));
+			q.push_back(data);
 			while (!q.empty()) {
-				dtype data = q.front();
-				CkAssert(getBaseIndex(data.v) == thisIndex);
+				dtype d = q.front();
+				CkAssert(getBaseIndex(d.v) == thisIndex);
 
 				q.pop_front();
-				vertices[getLocalIndex(data.v)].update(*this, data.weight, data.parent);
+				vertices[getLocalIndex(d.v)].update(*this, d.weight, d.parent);
 			}
 		}
 
@@ -175,23 +192,27 @@ class SSSPMultiVertex : public CBase_SSSPMultiVertex {
 		inline CmiUInt8 getBase() { 
 			return thisIndex * (N / ckGetArraySize()); 
 		}
+
+		void foo() {} 
 };
 
 void SSSPVertex::update(SSSPMultiVertex & multiVertex, const double & weight, const CmiUInt8 & parent) {
 	if (weight < this->weight) {
-
 		//CkPrintf("%lld: update %e -> %e\n", thisIndex, this->weight, weight);
 		std::deque<dtype> & q = multiVertex.getQ();
 		CProxy_SSSPMultiVertex & thisProxy = multiVertex.thisProxy; 
 		this->weight = weight;
 		this->parent = parent;
 
+		ArrayMeshStreamer<dtype, long long, SSSPMultiVertex, SimpleMeshRouter>
+			* localAggregator = aggregator.ckLocalBranch();
 		typedef typename std::vector<SSSPEdge>::iterator Iterator; 
 		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 			if (multiVertex.isLocalIndex(it->v))
 				q.push_back(dtype(it->v, this->weight + it->w, thisIndex));
 			else
-				thisProxy[multiVertex.getBaseIndex(it->v)].update(it->v, this->weight + it->w, thisIndex);
+				//thisProxy[multiVertex.getBaseIndex(it->v)].update(it->v, this->weight + it->w, thisIndex);
+				localAggregator->insertData(dtype(it->v, this->weight + it->w, thisIndex), multiVertex.getBaseIndex(it->v));
 		}
 	}
 }
@@ -221,4 +242,4 @@ typedef GraphLib::GraphGenerator<
 	GraphLib::TransportType::Tram> Generator;
 
 #include "driver.C"
-#include "charm_multivertex_sssp.def.h"
+#include "tram_multivertex_sssp.def.h"

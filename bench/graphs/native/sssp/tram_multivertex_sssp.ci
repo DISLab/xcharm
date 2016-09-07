@@ -1,0 +1,60 @@
+mainmodule tram_multivertex_sssp {
+	extern module GraphGenerator;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices)
+  readonly CmiUInt8                         N;
+  readonly CmiUInt8                         M;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+  // Handle to the communication library (group)
+  readonly CProxy_ArrayMeshStreamer<dtype, long long, SSSPMultiVertex,
+                                    SimpleMeshRouter> aggregator;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry [threaded] void start();
+    entry [threaded] void restart();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    //entry void startVerificationPhase();
+		entry void startGraphConstruction();
+		entry void exit();
+  };
+
+	class SSSPEdge;
+  array [1D] SSSPMultiVertex {
+    entry SSSPMultiVertex();
+		entry void connectVertex(std::pair<CmiUInt8, SSSPEdge> & edge);
+		entry void make_root(const CmiUInt8 & root);
+		//entry void update(const CmiUInt8 & v, const double & weight, const CmiUInt8 & parent); 
+		entry void verify(); 
+		entry void check(const CmiUInt8 & v, const double & weight); 
+		entry void getScannedVertexNum();
+		entry void foo();
+  };
+
+  // Setup required for the communication library
+  message MeshStreamerMessage<ArrayDataItem<dtype, long long> >;
+  group ArrayMeshStreamer<dtype, long long, SSSPMultiVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
+
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<std::pair<CmiUInt8, SSSPEdge>, long long> >;
+  group ArrayMeshStreamer<std::pair<CmiUInt8, SSSPEdge>, long long, SSSPMultiVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<std::pair<CmiUInt8, SSSPEdge>, long long>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<SSSPGraph, Options,		
+		GraphLib::VertexMapping::MultiVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<std::pair<CmiUInt8, SSSPEdge>, long long, SSSPMultiVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<SSSPGraph, Options,		
+		GraphLib::VertexMapping::MultiVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
+};

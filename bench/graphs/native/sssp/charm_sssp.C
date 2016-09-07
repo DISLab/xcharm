@@ -101,8 +101,6 @@ public:
 
   void update(const CmiUInt8 & v, const double & w) {
 		if (w < weight) {
-			//CkPrintf("%d: %2.2f -> %2.2f\n", thisIndex, weight, w);
-
 			// update current weight and parent
 			weight = w;
 			parent = v;
