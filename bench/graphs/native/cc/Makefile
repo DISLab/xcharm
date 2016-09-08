@@ -12,10 +12,8 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 $(CHARMC_LINK_FLAGS)
 
 BINARY = charm_cc \
-				 charm_multivertex_cc \
 				 tram_cc_r1 tram_cc_r16 tram_cc_r32 tram_cc_r64 \
 				 tram_cc_r256 tram_cc_r512 tram_cc_r1024 \
-				 tram_multivertex_cc
 #				 ucharelib_cc_async ucharelib_cc_async_radix
 
 all: dir $(BINARY)

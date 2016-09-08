@@ -1,40 +1,64 @@
 mainmodule tram_cc {
 	extern module GraphGenerator;
+	extern module NDMeshStreamer;
 
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices and number of edges)
+  readonly CmiUInt8                         N;
+	readonly CmiUInt8 												M;
+  // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
   // Handle to the communication library (group)
-  readonly CProxy_ArrayMeshStreamer<dtype, int, CCVertex,
+  readonly CProxy_ArrayMeshStreamer<dtype, long long, CCVertex,
                                     SimpleMeshRouter> aggregator;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
-		entry void startVerificationPhase();
-    entry [reductiontarget] void done();
-    //entry void startVerificationPhase();
-    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
-    //entry void checkErrors();
+    entry void start();
+    entry void restart();
 		entry void startGraphConstruction();
-		entry void exit();
-		entry void foo();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+		//entry [reductiontarget] void resume();
+    entry void exit();
+		//entry void grayVertexExist();
   };
 
-	class CCEdge; 
+	class CCEdge;
   array [1D] CCVertex {
     entry CCVertex();
 		entry void connectVertex(const CCEdge & edge);
-		entry void start();
-		entry [threaded] void process(const dtype & m); 
-		entry [threaded] void update(const dtype & m); 
+		entry [threaded] void start();
+		entry void update(CmiUInt8 c, int r); 
+		entry [threaded] void process(const dtype & m);
+		//entry [threaded] void resume();
+		//entry void getScannedEdgesNum();
+		entry void getScannedVertexNum();
 		entry void verify();
-		entry void check(const double & w);
-		entry void print();
+		entry void check(CmiUInt8 c);
   };
 
-	group GraphGenerator<CProxy_CCVertex, CCEdge, Options>;
-
   // Setup required for the communication library
-  message MeshStreamerMessage<ArrayDataItem<dtype, int> >;
-  group ArrayMeshStreamer<dtype, int, CCVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<dtype, int>, SimpleMeshRouter>;
+  message MeshStreamerMessage<ArrayDataItem<dtype, long long> >;
+  group ArrayMeshStreamer<dtype, long long, CCVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
+
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<CCEdge, long long> >;
+  group ArrayMeshStreamer<CCEdge, long long, CCVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<CCEdge, long long>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<CCGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<CCEdge, long long, CCVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<CCGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
 };
