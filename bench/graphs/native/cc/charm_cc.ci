@@ -1,31 +1,50 @@
 mainmodule charm_cc {
 	extern module GraphGenerator;
 
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices)
+  readonly CmiUInt8                         N;
+  readonly CmiUInt8                         M;
   // Handle to the test driver (chare)
   readonly CProxy_TestDriver               driverProxy;
 
   mainchare TestDriver {
     entry TestDriver (CkArgMsg *args);
-    entry [reductiontarget] void start();
+    entry void start();
+    entry void restart();
 		entry void startVerificationPhase();
-    entry [reductiontarget] void done();
-    //entry void startVerificationPhase();
-    //entry [reductiontarget] void reportErrors(CmiInt8 globalNumErrors);
-    //entry void checkErrors();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
 		entry void startGraphConstruction();
 		entry void exit();
   };
 
-	class CCEdge; 
+	class CCEdge;
   array [1D] CCVertex {
     entry CCVertex();
 		entry void connectVertex(const CCEdge & edge);
 		entry void start();
-		entry void update(const CmiUInt8 & c);
+		entry void update(CmiUInt8 c); 
+		entry void getScannedVertexNum();
 		entry void verify();
-		entry void check(const CmiUInt8 & c);
-		entry void print();
+		entry void check(CmiUInt8 c);
   };
 
-	group GraphGenerator<CProxy_CCVertex, CCEdge, Options>;
+	// Setup required for the graph generation library
+  message MeshStreamerMessage<ArrayDataItem<CCEdge, long long> >;
+  group ArrayMeshStreamer<CCEdge, long long, CCVertex, SimpleMeshRouter>;
+  group MeshStreamer<ArrayDataItem<CCEdge, long long>, SimpleMeshRouter>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Tram<CCGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker,
+		CProxy_ArrayMeshStreamer<CCEdge, long long, CCVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Generator_Charm<CCGraph, Options,		
+		GraphLib::VertexMapping::SingleVertex,
+		GraphLib::GraphType::Directed,
+		GraphLib::GraphGeneratorType::Kronecker>;
 };
