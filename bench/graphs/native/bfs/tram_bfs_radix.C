@@ -6,7 +6,6 @@ class BFSEdge;
 class	BFSGraph;
 
 #define RADIX_ENABLED
-//#define RADIX 1
 
 typedef struct __dtype {
 	int level;
@@ -22,10 +21,11 @@ typedef struct __dtype {
 	}
 } dtype;
 
-#include "tram_bfs.decl.h"
+#include "tram_bfs_radix.decl.h"
 
 CmiUInt8 N, M;
 int K = 16;
+int R = 1;
 CProxy_TestDriver driverProxy;
 CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex,
                          SimpleMeshRouter> aggregator;
@@ -126,7 +126,7 @@ class BFSVertex : public CBase_BFSVertex {
 
 			typedef typename std::vector<BFSEdge>::iterator Iterator; 
 			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-				localAggregator->insertData(dtype(this->level, thisIndex, RADIX), it->v);
+				localAggregator->insertData(dtype(this->level, thisIndex, R), it->v);
 				numScannedEdges++;
 			}
 		}
@@ -151,7 +151,7 @@ class BFSVertex : public CBase_BFSVertex {
 				state = Gray;
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-					thisProxy[it->v].update(this->level, thisIndex, RADIX);
+					thisProxy[it->v].update(this->level, thisIndex, R);
 				}
 				//driverProxy.grayVertexExist();
 			}
@@ -182,7 +182,7 @@ typedef GraphLib::GraphGenerator<
 	Options, 
 	GraphLib::VertexMapping::SingleVertex,
 	GraphLib::GraphType::Directed,
-	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::GraphGeneratorType::GRAPH,
 	GraphLib::TransportType::Tram> Generator;
 #include "driver.C"
-#include "tram_bfs.def.h"
+#include "tram_bfs_radix.def.h"

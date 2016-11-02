@@ -7,6 +7,7 @@ void parseCommandOptions(int argc, char **argv, Options & opts);
 struct Options {
 	int scale;
 	int K;
+	int R;
 	bool strongscale;
 	bool verify;
 	bool freeze;
@@ -14,6 +15,23 @@ struct Options {
 	CmiUInt8 N;
 	CmiUInt8 M;
 	CmiUInt8 root;
+
+	struct SSCA_Options {
+		CmiUInt8 maxCliqueSize;
+		bool foreward, backward;
+		int numParallelEdges;
+		SSCA_Options() : maxCliqueSize(8), foreward(true), backward(false), numParallelEdges(1) {}
+
+		void pup(PUP::er & p) {
+			p | maxCliqueSize;
+			p | foreward;
+			p | backward;
+			p | numParallelEdges;
+		}
+	};
+	SSCA_Options ssca;
+
+
 	Options() : scale(10), K(16), strongscale(true), verify(false), 
 		freeze(false), freeze_after_graph_creation(false), root(0) {
 		N = (1 << scale);
@@ -30,7 +48,9 @@ struct Options {
 		p | verify;
 		p | N;
 		p | M;
+		p | R;
 		p | root;
+		p | ssca;
 	}
 };
 
@@ -62,6 +82,12 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 		}
 		if (!strcmp(argv[i], "--freeze-after-graph-creation")) {
 			opts.freeze_after_graph_creation = true;
+		}
+		if (!strcmp(argv[i], "--max-clique-size") || !strcmp(argv[i], "-c")) {
+			opts.ssca.maxCliqueSize = (int) atoi(argv[++i]);
+		}
+		if (!strcmp(argv[i], "--radix") || !strcmp(argv[i], "-r")) {
+			opts.ssca.maxCliqueSize = (int) atoi(argv[++i]);
 		}
 	}
 

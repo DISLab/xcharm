@@ -137,7 +137,6 @@ public:
     double update_walltime = CkWallTimer() - starttime;
 		CkPrintf("Initialization completed:\n");
     CkPrintf("CPU time used = %.6f seconds\n", update_walltime);
-		while(1){}
     starttime = CkWallTimer();
 		for (int i = 0; i < iters; i++) {
 			CkPrintf("PageRank step %d:\n", i);

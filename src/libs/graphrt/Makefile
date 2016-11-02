@@ -1,6 +1,6 @@
 include ../../../config.mk
 CHARMXI=../../../bin/charmxi
-CHARMC_COMPILE_FLAGS=-I./include/graph500 -I$(BOOST_ROOT)/include
+CHARMC_COMPILE_FLAGS=-I./include/graph500 -I$(BOOST_ROOT)/include -Wno-deprecated-declarations
 
 all: libGraph.a
 	ln -sf ../src/libs/graphrt ../../../include/graphrt

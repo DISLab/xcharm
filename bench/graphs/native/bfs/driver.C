@@ -12,6 +12,10 @@ public:
 		parseCommandOptions(args->argc, args->argv, opts);
     N = opts.N;
 		M = opts.M;
+#ifdef RADIX_ENABLED
+		R = opts.R;
+#endif
+
     driverProxy = thishandle;
 
     // Create the chares storing vertices
@@ -31,8 +35,8 @@ public:
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
-		generator->generate();
-		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
+		generator->generate(CkCallback(CkIndex_TestDriver::start(), thishandle));
+		//CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 
 
@@ -74,6 +78,7 @@ public:
 				CkPrintf("Start verification...\n");
 				graph->verify();
 			}
+			//graph->dump_edges();
 			CkStartQD(CkIndex_TestDriver::exit(), &thishandle);
 		}
   }

@@ -1,6 +1,6 @@
 include ../../../../config.mk
 CHARMXI=../../../../bin/charmxi
-CHARMC_COMPILE_FLAGS= -O3 -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
+CHARMC_COMPILE_FLAGS= -g -I./.tmp -I../.. -I../../../../include/graphrt  -I../../../../include/graphrt/graph500 \
 											-I$(BOOST_ROOT)/include $(CFLAGS) -Wno-deprecated-declarations
 CHARMC_LINK_FLAGS=-L./.tmp -L../../../../lib -lGraph \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
@@ -11,48 +11,37 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-BINARY = charm_bfs \
-				 charm_multivertex_bfs \
-				 tram_bfs_r1 tram_bfs_r16 tram_bfs_r32 tram_bfs_r64 \
-				 tram_bfs_r256 tram_bfs_r512 tram_bfs_r1024 \
-				 tram_multivertex_bfs
+BINARY = charm_bfs-rmat charm_bfs-ssca \
+				 tram_bfs_radix-rmat tram_bfs_radix-ssca
+#				 charm_multivertex_bfs-rmat charm_multivertex_bfs-ssca \
+#				 tram_multivertex_bfs-rmat tram_multivertex_bfs-ssca
 #				 ucharelib_bfs_async ucharelib_bfs_async_radix
 
 all: dir $(BINARY)
 
-charm_bfs: charm_bfs.o
-charm_bfs.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
+charm_bfs-rmat: charm_bfs-rmat.o
+charm_bfs-rmat.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
 
-charm_bfs_radix: charm_bfs_radix.o
-charm_bfs_radix.o: charm_bfs_radix.C charm_bfs_radix.decl.h charm_bfs_radix.def.h
+charm_bfs-ssca: charm_bfs-ssca.o
+charm_bfs-ssca.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=SSCA
 
-tram_bfs_r1: tram_bfs_r1.o
-tram_bfs_r1.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=1 
+#charm_bfs_radix-rmat: charm_bfs_radix-rmat.o
+#charm_bfs_radix-rmat.o: charm_bfs_radix.C charm_bfs_radix.decl.h charm_bfs_radix.def.h
+#	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
 
-tram_bfs_r16: tram_bfs_r16.o
-tram_bfs_r16.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=16 
+#charm_bfs_radix-ssca: charm_bfs_radix-ssca.o
+#charm_bfs_radix-ssca.o: charm_bfs_radix.C charm_bfs_radix.decl.h charm_bfs_radix.def.h
+#	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=SSCA
 
-tram_bfs_r32: tram_bfs_r32.o
-tram_bfs_r32.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=32
+tram_bfs_radix-rmat: tram_bfs_radix-rmat.o
+tram_bfs_radix-rmat.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
 
-tram_bfs_r64: tram_bfs_r64.o
-tram_bfs_r64.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=64
-
-tram_bfs_r256: tram_bfs_r256.o
-tram_bfs_r256.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=256
-
-tram_bfs_r512: tram_bfs_r512.o
-tram_bfs_r512.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=512
-
-tram_bfs_r1024: tram_bfs_r1024.o
-tram_bfs_r1024.o: tram_bfs.C tram_bfs.decl.h tram_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DRADIX=1024
+tram_bfs_radix-ssca: tram_bfs_radix-ssca.o
+tram_bfs_radix-ssca.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=SSCA
 
 charm_multivertex_bfs: charm_multivertex_bfs.o
 charm_multivertex_bfs.o: charm_multivertex_bfs.C charm_multivertex_bfs.decl.h charm_multivertex_bfs.def.h

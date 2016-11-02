@@ -1,20 +1,76 @@
 module GraphGenerator {
 	extern module NDMeshStreamer;
 	namespace GraphLib {
+		// old generators (TODO: remove them)
 		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType> 
 			group Generator_Charm  {
 				entry Generator_Charm(Graph & g, Opts & opts);
+				//entry [threaded] void generate(CkCallback & cb);
 				entry [threaded] void generate();
 			};	
 		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator> 
 			group Generator_Tram  {
 				entry Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator);
+				//entry [threaded] void generate(CkCallback & cb);
 				entry [threaded] void generate();
 			};	
 		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType> 
 			group Generator_uChareLib  {
 				entry Generator_uChareLib(Graph & g, Opts & opts);
-				entry [threaded] void generate();
+				entry [threaded] void generate(CkCallback & cb);
+			};	
+
+		// new generators
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType> 
+			group SSCA_Generator_Charm  {
+				entry SSCA_Generator_Charm(Graph & g, Opts & opts);
+				entry [threaded] void generate(CkCallback & cb);
+				entry void do_cliqueGeneration();
+				entry void do_edgeGeneration();
+				entry void addVertexToClique(CmiUInt8 v, CmiUInt8 c);
+				entry void addInterCliqueEdge(CmiUInt8 v, CmiUInt8 u, CmiUInt8 cv);
+				entry void dump_vertices();
+				entry void dump_cliques();
+				entry void dump_edges();
+			};	
+
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, class CProxy_Aggregator>
+			group SSCA_Generator_Tram  {
+				entry SSCA_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator);
+				entry [threaded] void generate(CkCallback & cb);
+				entry void do_cliqueGeneration();
+				entry void do_edgeGeneration();
+				entry void addVertexToClique(CmiUInt8 v, CmiUInt8 c);
+				entry void addInterCliqueEdge(CmiUInt8 v, CmiUInt8 u, CmiUInt8 cv);
+				entry void dump_vertices();
+				entry void dump_cliques();
+				entry void dump_edges();
+			};	
+
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType>
+			group RMAT_Generator_Charm  {
+				entry RMAT_Generator_Charm(Graph & g, Opts & opts);
+				entry [threaded] void generate(CkCallback & cb);
+				entry void do_edgeGeneration();
+			};	
+
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, class CProxy_Aggregator>
+			group RMAT_Generator_Tram  {
+				entry RMAT_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator);
+				entry [threaded] void generate(CkCallback & cb);
+				entry void do_edgeGeneration();
+			};	
+
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType> 
+			group Random_Generator_Charm  {
+				entry Random_Generator_Charm(Graph & g, Opts & opts);
+				entry [threaded] void generate(CkCallback & cb);
+			};	
+
+		template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType> 
+			group Random_Generator_Tram  {
+				entry Random_Generator_Tram(Graph & g, Opts & opts);
+				entry [threaded] void generate(CkCallback & cb);
 			};	
 	}
 };

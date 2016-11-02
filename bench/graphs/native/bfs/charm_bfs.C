@@ -47,6 +47,9 @@ public:
 	void verify() {
 		g.verify();
 	}
+	void dump_edges() {
+		g.dump_edges();
+	}
 };
 
 CmiUInt8 N, M;
@@ -121,6 +124,12 @@ public:
 	void check(int level) {
 		CkAssert(this->level + 1 == level);
 	}
+	void dump_edges() {
+		typedef typename std::vector<BFSEdge>::iterator Iterator; 
+		for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+			CkPrintf("%lld,%lld\n", thisIndex, it->v);
+		}
+	}
 };
 
 typedef GraphLib::GraphGenerator<
@@ -128,7 +137,8 @@ typedef GraphLib::GraphGenerator<
 	Options, 
 	GraphLib::VertexMapping::SingleVertex,
 	GraphLib::GraphType::Directed,
-	GraphLib::GraphGeneratorType::Kronecker,
-	GraphLib::TransportType::Tram> Generator;
+	GraphLib::GraphGeneratorType::GRAPH,
+	GraphLib::TransportType::Tram
+	> Generator;
 #include "driver.C"
 #include "charm_bfs.def.h"
