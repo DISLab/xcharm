@@ -87,7 +87,7 @@ void parseCommandOptions(int argc, char **argv, Options & opts)
 			opts.ssca.maxCliqueSize = (int) atoi(argv[++i]);
 		}
 		if (!strcmp(argv[i], "--radix") || !strcmp(argv[i], "-r")) {
-			opts.ssca.maxCliqueSize = (int) atoi(argv[++i]);
+			opts.R = (int) atoi(argv[++i]);
 		}
 	}
 
