@@ -20,7 +20,7 @@ struct Options {
 		CmiUInt8 maxCliqueSize;
 		bool foreward, backward;
 		int numParallelEdges;
-		SSCA_Options() : maxCliqueSize(8), foreward(true), backward(false), numParallelEdges(1) {}
+		SSCA_Options() : maxCliqueSize(256), foreward(true), backward(false), numParallelEdges(1) {}
 
 		void pup(PUP::er & p) {
 			p | maxCliqueSize;
