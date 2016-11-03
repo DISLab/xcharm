@@ -119,6 +119,7 @@ namespace GraphLib {
 					totalClique = totalVertex / opts.ssca.maxCliqueSize;
 					vertexToClique = std::vector<CmiUInt8>(totalVertex / CmiNumPes(), -1);
 					cliques = std::vector<Clique>(totalClique / CmiNumPes());
+					srandom(CmiMyPe()); // FIXME: neet to use more smart approach to pseudo-random stream generation
 				}
 				virtual void addEdge(const std::pair<uint64_t,uint64_t> & e) = 0; 
 				virtual void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) = 0;
