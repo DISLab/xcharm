@@ -1,5 +1,6 @@
 #ifndef __GeneratorSSCA_h__
 #define __GeneratorSSCA_h__
+#include <algorithm>
 
 namespace GraphLib {
 
@@ -76,10 +77,14 @@ namespace GraphLib {
 						// do edge generation
 						CkPrintf("\tgenerating edges...");
 						this->thisProxy.do_edgeGeneration();
-						CkPrintf("...done\n");
 						CkStartQD(CkCallbackResumeThread());
-						//this->thisProxy.dump_cliques();
-						//CkStartQD(CkCallbackResumeThread());
+						CkPrintf("...done\n");
+
+						/*for (int i = 0; i < CmiNumPes(); i++) {
+							this->thisProxy[i].dump_cliques();
+							CkStartQD(CkCallbackResumeThread());
+						}*/
+						//CkExit();
 						// return control to application 
 						cb.send();
 					}
@@ -176,6 +181,7 @@ namespace GraphLib {
 					// generate intra-clique edges
 					for(CmiUInt8 c = 0; c < totalClique / CmiNumPes(); c++) {
 						Clique & clique = cliques[c];
+						std::sort(clique.begin(), clique.end());
 						for(CmiUInt8 i = 0; i < clique.size(); i++)
 							for(CmiUInt8 j = i + 1; j < clique.size(); j++)
 								for(int k = 0; k < numParallelEdges; k++) {
