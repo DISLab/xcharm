@@ -80,10 +80,10 @@ namespace GraphLib {
 						CkStartQD(CkCallbackResumeThread());
 						CkPrintf("...done\n");
 
-						/*for (int i = 0; i < CmiNumPes(); i++) {
-							this->thisProxy[i].dump_cliques();
-							CkStartQD(CkCallbackResumeThread());
-						}*/
+						//for (int i = 0; i < CmiNumPes(); i++) {
+						//	this->thisProxy[i].dump_cliques();
+						//	CkStartQD(CkCallbackResumeThread());
+						//}
 						//CkExit();
 						// return control to application 
 						cb.send();
@@ -124,7 +124,10 @@ namespace GraphLib {
 					totalClique = totalVertex / opts.ssca.maxCliqueSize;
 					vertexToClique = std::vector<CmiUInt8>(totalVertex / CmiNumPes(), -1);
 					cliques = std::vector<Clique>(totalClique / CmiNumPes());
-					srandom(CmiMyPe()); // FIXME: neet to use more smart approach to pseudo-random stream generation
+					//srandom(CmiMyPe()); // FIXME: neet to use more smart approach to pseudo-random stream generation
+					srandom(1); 
+					for(CmiUInt8 i = 0; i < CmiMyPe() * totalVertex / CmiNumPes() ; i++)
+						random(); 
 				}
 				virtual void addEdge(const std::pair<uint64_t,uint64_t> & e) = 0; 
 				virtual void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) = 0;
@@ -197,22 +200,23 @@ namespace GraphLib {
 						for(CmiUInt8 j = 2; j < totalVertex; j *= 2) {
 							CmiUInt8 u = (v + j) % totalVertex;
 							if (u >= startVertexIndex && 
-									u < (startVertexIndex + totalVertex / CmiNumPes()))
+									u < (startVertexIndex + totalVertex / CmiNumPes())) {
+								// the u vertex belongs to local pe
 								if (vertexToClique[v % (totalVertex / CmiNumPes())] !=
 										vertexToClique[u % (totalVertex / CmiNumPes())])
-									// the u vertex belongs to local pe
 									for(int k = 0; k < numParallelEdges; k++) {
 										if (foreward)
 											addEdge(std::make_pair(v, u));
 										if (backward)
 											addEdge(std::make_pair(u, v));
 									}
-								else
-									// the u vertex belongs to remote pe
-									//this->thisProxy[u / (totalVertex / CmiNumPes())].addInterCliqueEdge(v, u, 
-									//		vertexToClique[v % (totalVertex / CmiNumPes())]);
-									sndMsg_addInterCliqueEdge(u / (totalVertex / CmiNumPes()), v, u, 
-											vertexToClique[v % (totalVertex / CmiNumPes())]);
+							}
+							else
+								// the u vertex belongs to remote pe
+								//this->thisProxy[u / (totalVertex / CmiNumPes())].addInterCliqueEdge(v, u, 
+								//		vertexToClique[v % (totalVertex / CmiNumPes())]);
+								sndMsg_addInterCliqueEdge(u / (totalVertex / CmiNumPes()), v, u, 
+										vertexToClique[v % (totalVertex / CmiNumPes())]);
 						}
 					}
 				}
