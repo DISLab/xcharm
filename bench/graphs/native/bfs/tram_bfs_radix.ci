@@ -39,6 +39,7 @@ mainmodule tram_bfs_radix {
 		entry void getScannedVertexNum();
 		entry void verify();
 		entry void check(int level);
+		entry void dump_edges();
   };
 
   // Setup required for the communication library

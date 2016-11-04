@@ -77,6 +77,9 @@ public:
 	void verify() {
 		g.verify();
 	}
+	void dump_edges() {
+		g.dump_edges();
+	}
 };
 
 struct BFSEdge {
@@ -116,6 +119,7 @@ class BFSVertex : public CBase_BFSVertex {
 		BFSVertex(CkMigrateMessage *msg) {}
 
 		void make_root() {
+			CkPrintf("R = %d\n", R);
 			if (level >= 0)
 				return;
 			level = 0;
@@ -140,12 +144,16 @@ class BFSVertex : public CBase_BFSVertex {
 			this->parent = parent;
 
 			if (r > 0) {
+			
 				state = Black;
 				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
-					localAggregator->insertData(dtype(this->level, thisIndex, r - 1), it->v);
+					if (thisProxy.ckLocalBranch()->lastKnown(it->v) != CmiMyPe())
+						localAggregator->insertData(dtype(this->level, thisIndex, r - 1), it->v);
+					else
+						thisProxy[it->v].update(this->level, thisIndex, R);
 				}
 			} else {
 				state = Gray;
@@ -174,6 +182,12 @@ class BFSVertex : public CBase_BFSVertex {
 
 		void check(int level) {
 			CkAssert(this->level + 1 == level);
+		}
+		void dump_edges() {
+			typedef typename std::vector<BFSEdge>::iterator Iterator; 
+			for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
+				CkPrintf("%lld,%lld\n", thisIndex, it->v);
+			}
 		}
 };
 
