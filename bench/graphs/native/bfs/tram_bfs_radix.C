@@ -95,13 +95,12 @@ struct BFSEdge {
 class BFSVertex : public CBase_BFSVertex {
 	private:
 		std::vector<BFSEdge> adjlist;
-		enum State {White, Gray, Black} state;
 		CmiUInt8 parent;
 		int level;
 		CmiUInt8 numScannedEdges;
 
 	public:
-		BFSVertex() : state(White), level(-1), parent(-1), numScannedEdges(0) {
+		BFSVertex() : level(-1), parent(-1), numScannedEdges(0) {
 			// Contribute to a reduction to signal the end of the setup phase
 			//contribute(CkCallback(CkReductionTarget(TestDriver, start), driverProxy));
 		}
@@ -123,7 +122,6 @@ class BFSVertex : public CBase_BFSVertex {
 			if (level >= 0)
 				return;
 			level = 0;
-			state = Black;
 			parent = thisIndex;
 			ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 				* localAggregator = aggregator.ckLocalBranch();
@@ -144,19 +142,17 @@ class BFSVertex : public CBase_BFSVertex {
 			this->parent = parent;
 
 			if (r > 0) {
-			
-				state = Black;
 				ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
 					* localAggregator = aggregator.ckLocalBranch();
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					if (thisProxy.ckLocalBranch()->lastKnown(it->v) != CmiMyPe())
-						localAggregator->insertData(dtype(this->level, thisIndex, r - 1), it->v);
+						//localAggregator->insertData(dtype(this->level, thisIndex, r - 1), it->v);
+						localAggregator->insertData(dtype(this->level, thisIndex, 1), it->v);
 					else
 						thisProxy[it->v].update(this->level, thisIndex, R);
 				}
 			} else {
-				state = Gray;
 				typedef typename std::vector<BFSEdge>::iterator Iterator; 
 				for (Iterator it = adjlist.begin(); it != adjlist.end(); it++) {
 					thisProxy[it->v].update(this->level, thisIndex, R);
