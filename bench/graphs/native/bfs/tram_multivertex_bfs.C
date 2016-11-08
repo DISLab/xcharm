@@ -71,6 +71,7 @@ public:
 	void verify() {
 		g.verify();
 	}
+	static CmiUInt4 base(CmiUInt8 v) { return v / (N / CmiNumPes()); }
 };
 
 struct BFSEdge {
@@ -249,8 +250,7 @@ typedef GraphLib::GraphGenerator<
 	BFSGraph, 
 	Options, 
 	GraphLib::VertexMapping::MultiVertex,
-	GraphLib::GraphType::Directed,
-	GraphLib::GraphGeneratorType::Kronecker,
+	GraphLib::GraphGeneratorType::GRAPH,
 	GraphLib::TransportType::Tram> Generator;
 
 #include "driver.C"

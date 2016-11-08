@@ -31,21 +31,5 @@ mainmodule charm_multivertex_bfs {
 		entry void getScannedVertexNum();
   };
 
-	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<std::pair<CmiUInt8, BFSEdge>, long long> >;
-  group ArrayMeshStreamer<std::pair<CmiUInt8, BFSEdge>, long long, BFSMultiVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<std::pair<CmiUInt8, BFSEdge>, long long>, SimpleMeshRouter>;
-
-	//FIXME:charmxi bug
-	group GraphLib__Generator_Tram<BFSGraph, Options,		
-		GraphLib::VertexMapping::MultiVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<std::pair<CmiUInt8, BFSEdge>, long long, BFSMultiVertex, SimpleMeshRouter> >;
-
-	//FIXME:charmxi bug
-	group GraphLib__Generator_Charm<BFSGraph, Options,		
-		GraphLib::VertexMapping::MultiVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker>;
+#include "common-multi.ci"
 };

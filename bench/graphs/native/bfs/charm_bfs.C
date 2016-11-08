@@ -136,7 +136,6 @@ typedef GraphLib::GraphGenerator<
 	BFSGraph, 
 	Options, 
 	GraphLib::VertexMapping::SingleVertex,
-	GraphLib::GraphType::Directed,
 	GraphLib::GraphGeneratorType::GRAPH,
 	GraphLib::TransportType::Tram
 	> Generator;

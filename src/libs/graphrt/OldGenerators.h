@@ -2,12 +2,12 @@
 #define __OLDGENERATORS_H__
 
 namespace GraphLib {
-	template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType>
+	template <class Graph, class Opts, VertexMapping vertexMapping, GraphGeneratorType graphGeneratorType>
 		class Generator_Charm;
 
-	template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType>
-		class Generator_Charm<Graph, Opts, VertexMapping::SingleVertex, graphType, graphGeneratorType > : 
-			public CBase_Generator_Charm <Graph, Opts, VertexMapping::SingleVertex, graphType, graphGeneratorType>, 
+	template <class Graph, class Opts, GraphGeneratorType graphGeneratorType>
+		class Generator_Charm<Graph, Opts, VertexMapping::SingleVertex, graphGeneratorType > : 
+			public CBase_Generator_Charm <Graph, Opts, VertexMapping::SingleVertex, graphGeneratorType>, 
 			Generator<Graph, Opts, graphGeneratorType> {
 				typedef typename Graph::Proxy CProxy_Graph;
 				typedef typename Graph::Vertex Vertex;
@@ -25,9 +25,9 @@ namespace GraphLib {
 					}
 			};
 
-	template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType>
-		class Generator_Charm<Graph, Opts, VertexMapping::MultiVertex, graphType, graphGeneratorType > : 
-			public CBase_Generator_Charm <Graph, Opts, VertexMapping::MultiVertex, graphType, graphGeneratorType>, 
+	template <class Graph, class Opts, GraphGeneratorType graphGeneratorType>
+		class Generator_Charm<Graph, Opts, VertexMapping::MultiVertex, graphGeneratorType > : 
+			public CBase_Generator_Charm <Graph, Opts, VertexMapping::MultiVertex, graphGeneratorType>, 
 			Generator<Graph, Opts, graphGeneratorType> {
 				typedef typename Graph::Proxy CProxy_Graph;
 				typedef typename Graph::Vertex Vertex;
@@ -47,17 +47,17 @@ namespace GraphLib {
 			};
 
 	//
-	//template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType>
-	//	void Generator_Charm<Graph, Opts, VertexMapping::SingleVertex, graphType, graphGeneratorType>::addEdge(std::pair<uint64_t,uint64_t> & e) {} 
-	//template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType>
-	//	void Generator_Charm<Graph, Opts, VertexMapping::MultiVertex, graphType, graphGeneratorType>::addEdge(std::pair<uint64_t,uint64_t> & e) {} 
+	//template <class Graph, class Opts, GraphGeneratorType graphGeneratorType>
+	//	void Generator_Charm<Graph, Opts, VertexMapping::SingleVertex, graphGeneratorType>::addEdge(std::pair<uint64_t,uint64_t> & e) {} 
+	//template <class Graph, class Opts, GraphGeneratorType graphGeneratorType>
+	//	void Generator_Charm<Graph, Opts, VertexMapping::MultiVertex, graphGeneratorType>::addEdge(std::pair<uint64_t,uint64_t> & e) {} 
 
-	template <class Graph, class Opts, VertexMapping vertexMapping, GraphType graphType, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator >
+	template <class Graph, class Opts, VertexMapping vertexMapping, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator >
 		class Generator_Tram;
 
-	template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator >
-		class Generator_Tram<Graph, Opts, VertexMapping::SingleVertex, graphType, graphGeneratorType, CProxy_Aggregator> : 
-			public CBase_Generator_Tram <Graph, Opts, VertexMapping::SingleVertex, graphType, graphGeneratorType, CProxy_Aggregator >, 
+	template <class Graph, class Opts, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator >
+		class Generator_Tram<Graph, Opts, VertexMapping::SingleVertex, graphGeneratorType, CProxy_Aggregator> : 
+			public CBase_Generator_Tram <Graph, Opts, VertexMapping::SingleVertex, graphGeneratorType, CProxy_Aggregator >, 
 			Generator<Graph, Opts, graphGeneratorType> {
 				typedef typename Graph::Proxy GraphProxy;
 				typedef typename Graph::Vertex Vertex;
@@ -80,9 +80,9 @@ namespace GraphLib {
 					}
 			};
 
-	template <class Graph, class Opts, GraphType graphType, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator >
-		class Generator_Tram<Graph, Opts, VertexMapping::MultiVertex, graphType, graphGeneratorType, CProxy_Aggregator> : 
-			public CBase_Generator_Tram <Graph, Opts, VertexMapping::MultiVertex, graphType, graphGeneratorType, CProxy_Aggregator >, 
+	template <class Graph, class Opts, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator >
+		class Generator_Tram<Graph, Opts, VertexMapping::MultiVertex, graphGeneratorType, CProxy_Aggregator> : 
+			public CBase_Generator_Tram <Graph, Opts, VertexMapping::MultiVertex, graphGeneratorType, CProxy_Aggregator >, 
 			Generator<Graph, Opts, graphGeneratorType> {
 				typedef typename Graph::Proxy GraphProxy;
 				typedef typename Graph::Vertex Vertex;

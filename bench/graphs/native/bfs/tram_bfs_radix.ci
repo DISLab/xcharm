@@ -47,43 +47,5 @@ mainmodule tram_bfs_radix {
   group ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>;
   group MeshStreamer<ArrayDataItem<dtype, long long>, SimpleMeshRouter>;
 
-	// Setup required for the graph generation library
-  message MeshStreamerMessage<ArrayDataItem<BFSEdge, long long> >;
-  group ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter>;
-  group MeshStreamer<ArrayDataItem<BFSEdge, long long>, SimpleMeshRouter>;
-
-	//FIXME:charmxi bug
-	group GraphLib__Generator_Tram<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker,
-		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
-
-	//FIXME:charmxi bug
-	group GraphLib__Generator_Charm<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		GraphLib::GraphGeneratorType::Kronecker>;
-
-	//FIXME:charmxi bug
-	group GraphLib__SSCA_Generator_Charm<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed>;
-
-	//FIXME:charmxi bug
-	group GraphLib__SSCA_Generator_Tram<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
-
-	//FIXME:charmxi bug
-	group GraphLib__RMAT_Generator_Charm<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed>;
-
-	//FIXME:charmxi bug
-	group GraphLib__RMAT_Generator_Tram<BFSGraph, Options,		
-		GraphLib::VertexMapping::SingleVertex,
-		GraphLib::GraphType::Directed,
-		CProxy_ArrayMeshStreamer<BFSEdge, long long, BFSVertex, SimpleMeshRouter> >;
+#include "common-single.ci"
 };
