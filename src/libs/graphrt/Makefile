@@ -3,7 +3,10 @@ CHARMXI=../../../bin/charmxi
 CHARMC_COMPILE_FLAGS=-I./include/graph500 -I$(BOOST_ROOT)/include -Wno-deprecated-declarations
 
 all: libGraph.a
-	ln -sf ../src/libs/graphrt ../../../include/graphrt
+
+install: libGraph.a
+	if [ ! -L ../../../include/graphrt ] ;\
+	 	then ln -s ../src/libs/graphrt ../../../include/graphrt ; fi
 	cp libGraph.a ../../../lib
 
 libGraph.a: Graph.o
