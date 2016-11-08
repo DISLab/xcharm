@@ -27,14 +27,6 @@ charm_bfs-ssca: charm_bfs-ssca.o
 charm_bfs-ssca.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=SSCA
 
-#charm_bfs_radix-rmat: charm_bfs_radix-rmat.o
-#charm_bfs_radix-rmat.o: charm_bfs_radix.C charm_bfs_radix.decl.h charm_bfs_radix.def.h
-#	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
-
-#charm_bfs_radix-ssca: charm_bfs_radix-ssca.o
-#charm_bfs_radix-ssca.o: charm_bfs_radix.C charm_bfs_radix.decl.h charm_bfs_radix.def.h
-#	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=SSCA
-
 tram_bfs_radix-rmat: tram_bfs_radix-rmat.o
 tram_bfs_radix-rmat.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT

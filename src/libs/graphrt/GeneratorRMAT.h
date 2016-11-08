@@ -4,18 +4,13 @@
 
 namespace GraphLib {
 
-	template <class Graph, class Opts, VertexMapping vertexMapping>
-		class RMAT_Generator_Charm;
-
-	template <class Graph, class Opts, VertexMapping vertexMapping, class CProxy_Aggregator>
-		class RMAT_Generator_Tram;
-
 	template <class Graph, class Opts>
 		class RMAT_Generator;
 
-	template <class Graph, class Opts>
-		class RMAT_Generator_Charm<Graph, Opts, VertexMapping::SingleVertex> : 
-		public CBase_RMAT_Generator_Charm <Graph, Opts, VertexMapping::SingleVertex>,
+	template <class Graph, class Opts, VertexMapping vertexMapping>
+		class RMAT_Generator_Charm :
+			public CBase_RMAT_Generator_Charm <Graph, Opts, vertexMapping>,
+		 	public Base_Generator_Charm<Graph, Opts, vertexMapping>,
 				RMAT_Generator<Graph, Opts> {
 				typedef typename Graph::Proxy CProxy_Graph;
 				typedef typename Graph::Vertex Vertex;
@@ -24,7 +19,8 @@ namespace GraphLib {
 				Graph g;
 				public:
 					RMAT_Generator_Charm(Graph & g, Opts & opts) : g(g), graphProxy(g.getProxy()), 
-						RMAT_Generator<Graph, Opts>(g, opts) {}
+						RMAT_Generator<Graph, Opts>(g, opts), 
+						Base_Generator_Charm<Graph,Opts,vertexMapping>(g) {}
 					void generate(CkCallback & cb) {
 						if (CmiMyPe() == 0) {
 							// do edge generation
@@ -37,56 +33,15 @@ namespace GraphLib {
 					void do_edgeGeneration() { 
 						RMAT_Generator<Graph, Opts>::do_generate(); 
 					}
-					void addEdge(std::pair<uint64_t,uint64_t> & e) {
-						double w = drand48();
-						if (g.directed)
-							graphProxy[e.first].connectVertex(Edge(e.second, w));
-						else {
-							graphProxy[e.first].connectVertex(Edge(e.second, w));
-						  graphProxy[e.second].connectVertex(Edge(e.first, w));
-						}
+					void addEdge(const std::pair<uint64_t,uint64_t> & e) {
+						Base_Generator_Charm<Graph,Opts,vertexMapping>::addEdge(e);
 					}
 			};
 
-	template <class Graph, class Opts>
-		class RMAT_Generator_Charm<Graph, Opts, VertexMapping::MultiVertex> : 
-		public CBase_RMAT_Generator_Charm <Graph, Opts, VertexMapping::MultiVertex>,
-				RMAT_Generator<Graph, Opts> {
-				typedef typename Graph::Proxy CProxy_Graph;
-				typedef typename Graph::Vertex Vertex;
-				typedef typename Graph::Edge Edge;
-				CProxy_Graph graphProxy;
-				Graph g;
-				public:
-					RMAT_Generator_Charm(Graph & g, Opts & opts) : g(g), graphProxy(g.getProxy()), 
-						RMAT_Generator<Graph, Opts>(g, opts) {}
-					void generate(CkCallback & cb) {
-						if (CmiMyPe() == 0) {
-							// do edge generation
-							this->thisProxy.do_edgeGeneration();
-							CkStartQD(CkCallbackResumeThread());
-							// return control to application 
-							cb.send();
-						}
-					}
-					void do_edgeGeneration() { 
-						RMAT_Generator<Graph, Opts>::do_generate(); 
-					}
-					void addEdge(std::pair<uint64_t,uint64_t> & e) {
-						double w = drand48();
-						if (g.directed)
-							graphProxy[Graph::base(e.first)].connectVertex(std::make_pair(e.first, Edge(e.second, w)));
-						else {
-							graphProxy[Graph::base(e.first)].connectVertex(std::make_pair(e.first, Edge(e.second, w)));
-							graphProxy[Graph::base(e.second)].connectVertex(std::make_pair(e.second, Edge(e.first, w)));
-						}
-					}
-			};
-
-
-	template <class Graph, class Opts, class CProxy_Aggregator>
-		class RMAT_Generator_Tram<Graph, Opts, VertexMapping::SingleVertex, CProxy_Aggregator> :
-			public CBase_RMAT_Generator_Tram <Graph, Opts, VertexMapping::SingleVertex, CProxy_Aggregator>,
+	template <class Graph, class Opts, VertexMapping vertexMapping, class CProxy_Aggregator>
+		class RMAT_Generator_Tram :
+			public CBase_RMAT_Generator_Tram <Graph, Opts, vertexMapping, CProxy_Aggregator>,
+			public Base_Generator_Tram<Graph, Opts, vertexMapping, CProxy_Aggregator>,
 				RMAT_Generator<Graph, Opts> {
 				typedef typename Graph::Proxy CProxy_Graph;
 				typedef typename Graph::Vertex Vertex;
@@ -95,6 +50,7 @@ namespace GraphLib {
 				CProxy_Aggregator aggregator;
 				public:
 					RMAT_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator) : g(g), aggregator(aggregator), 
+						Base_Generator_Tram<Graph, Opts, vertexMapping, CProxy_Aggregator>(g, aggregator),
 						RMAT_Generator<Graph, Opts>(g, opts) {}
 					void generate(CkCallback & cb) {
 						if (CmiMyPe() == 0) {
@@ -108,55 +64,11 @@ namespace GraphLib {
 					void do_edgeGeneration() { 
 						RMAT_Generator<Graph, Opts>::do_generate(); 
 					}
-					void addEdge(std::pair<uint64_t,uint64_t> & e) {
-						double w = drand48();
-						ArrayMeshStreamer<Edge, long long, Vertex, SimpleMeshRouter>
-							* localAggregator = aggregator.ckLocalBranch();
-						if (g.directed) {
-							localAggregator->insertData(Edge(e.second, w), e.first);
-						} else {
-							localAggregator->insertData(Edge(e.second, w), e.first);
-							localAggregator->insertData(Edge(e.first, w), e.second);
-						}
+					void addEdge(const std::pair<uint64_t,uint64_t> & e) {
+						Base_Generator_Tram<Graph,Opts,vertexMapping,CProxy_Aggregator>::addEdge(e);
 					}
 			};
 
-	template <class Graph, class Opts, class CProxy_Aggregator>
-		class RMAT_Generator_Tram<Graph, Opts, VertexMapping::MultiVertex, CProxy_Aggregator> :
-			public CBase_RMAT_Generator_Tram <Graph, Opts, VertexMapping::MultiVertex, CProxy_Aggregator>,
-				RMAT_Generator<Graph, Opts> {
-				typedef typename Graph::Proxy CProxy_Graph;
-				typedef typename Graph::Vertex Vertex;
-				typedef typename Graph::Edge Edge;
-				Graph g;
-				CProxy_Aggregator aggregator;
-				public:
-					RMAT_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator) : g(g), aggregator(aggregator), 
-						RMAT_Generator<Graph, Opts>(g, opts) {}
-					void generate(CkCallback & cb) {
-						if (CmiMyPe() == 0) {
-							// do edge generation
-							this->thisProxy.do_edgeGeneration();
-							CkStartQD(CkCallbackResumeThread());
-							// return control to application 
-							cb.send();
-						}
-					}
-					void do_edgeGeneration() { 
-						RMAT_Generator<Graph, Opts>::do_generate(); 
-					}
-					void addEdge(std::pair<uint64_t,uint64_t> & e) {
-						double w = drand48();
-						ArrayMeshStreamer<std::pair<CmiUInt8, Edge>, long long, Vertex, SimpleMeshRouter>
-							* localAggregator = aggregator.ckLocalBranch();
-						if (g.directed) {
-							localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), Graph::base(e.first));
-						} else {
-							localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), Graph::base(e.first));
-							localAggregator->insertData(std::make_pair(e.second, Edge(e.first, w)), Graph::base(e.second));
-						}
-					}
-			};
 
 	template <class Graph, class Opts>
 		class RMAT_Generator {
@@ -165,7 +77,7 @@ namespace GraphLib {
 				Opts opts;
 			public:
 				RMAT_Generator (Graph & g, Opts & opts) : g(g), opts(opts) {}
-				virtual void addEdge(std::pair<uint64_t,uint64_t> & e) = 0;
+				virtual void addEdge(const std::pair<uint64_t,uint64_t> & e) = 0;
 				void do_generate();
 		};
 
@@ -232,7 +144,7 @@ namespace GraphLib {
 				Opts opts;
 			public:
 				Generator (Graph & g, Opts & opts) : g(g), opts(opts) {}
-				virtual void addEdge(std::pair<uint64_t,uint64_t> & e) = 0;
+				virtual void addEdge(const std::pair<uint64_t,uint64_t> & e) = 0;
 				void do_generate();
 		};
 

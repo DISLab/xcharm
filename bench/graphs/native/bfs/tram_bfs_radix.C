@@ -37,9 +37,11 @@ class BFSGraph : public GraphLib::Graph<
 	BFSEdge,
 	CProxy_BFSVertex,
 	GraphLib::TransportType::Charm> {
-
 public:
-	BFSGraph() : 
+	bool directed;
+public:
+	BFSGraph(bool directed = true) : 
+	  directed(directed),	
 		GraphLib::Graph<
 				BFSVertex, 
 				BFSEdge,
@@ -47,7 +49,8 @@ public:
 				GraphLib::TransportType::Charm >()	
 		{}
 
-	BFSGraph(CmiUInt8 nVertex) : 
+	BFSGraph(CmiUInt8 nVertex, bool directed = true) : 
+	  directed(directed),	
 		GraphLib::Graph<
 				BFSVertex, 
 				BFSEdge,

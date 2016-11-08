@@ -13,21 +13,26 @@ class BFSGraph : public GraphLib::Graph<
 	CProxy_BFSVertex,
 	GraphLib::TransportType::Charm> {
 public:
-	BFSGraph() : 
+	bool directed;
+public:
+	BFSGraph(bool directed = true) : 
+	  directed(directed),	
 		GraphLib::Graph<
 				BFSVertex, 
 				BFSEdge,
 				CProxy_BFSVertex, 
 				GraphLib::TransportType::Charm >()	
 		{}
-	BFSGraph(CmiUInt8 nVertex) : 
+	BFSGraph(CmiUInt8 nVertex, bool directed = true) : 
+	  directed(directed),	
 		GraphLib::Graph<
 				BFSVertex, 
 				BFSEdge,
 				CProxy_BFSVertex, 
 				GraphLib::TransportType::Charm >(nVertex)	
 		{}
-	BFSGraph(const CProxy_BFSVertex & g) : 
+	BFSGraph(const CProxy_BFSVertex & g, bool directed = true) : 
+		directed(directed),
 		GraphLib::Graph<
 				BFSVertex, 
 				BFSEdge,

@@ -5,213 +5,102 @@
 
 namespace GraphLib {
 
-	template <class Graph, class Opts, VertexMapping vertexMapping>
-		class SSCA_Generator_Charm;
-
-	template <class Graph, class Opts, VertexMapping vertexMapping, class CProxy_Aggregator>
-		class SSCA_Generator_Tram;
-
 	template <class Graph, class Opts>
 		class SSCA_Generator;
 
-	template <class Graph, class Opts>
-		class SSCA_Generator_Charm<Graph, Opts, VertexMapping::SingleVertex> : 
-			public CBase_SSCA_Generator_Charm <Graph, Opts, VertexMapping::SingleVertex>, 
-				public SSCA_Generator<Graph, Opts> {
-			public:
-				SSCA_Generator_Charm(Graph & g, Opts & opts) : g(g),  SSCA_Generator<Graph, Opts>(g, opts) {}
-
-				void generate(CkCallback & cb) {
-					if (CmiMyPe() == 0) {
-						CkPrintf("SSCA generation started\n");
-						this->info();
-						// do clique generation
-						CkPrintf("\tgenerating cliques...");
-						this->thisProxy.do_cliqueGeneration();
-						CkPrintf("...done\n");
-						CkStartQD(CkCallbackResumeThread());
-						// do edge generation
-						CkPrintf("\tgenerating edges...");
-						this->thisProxy.do_edgeGeneration();
-						CkPrintf("...done\n");
-						CkStartQD(CkCallbackResumeThread());
-						// return control to application 
-						cb.send();
+	template <class Graph, class Opts, VertexMapping vertexMapping>
+		class SSCA_Generator_Charm :
+			public CBase_SSCA_Generator_Charm <Graph, Opts, vertexMapping>,
+			public Base_Generator_Charm<Graph, Opts, vertexMapping>,
+			public SSCA_Generator<Graph, Opts> {
+				public:
+					SSCA_Generator_Charm(Graph & g, Opts & opts) : g(g),  
+						Base_Generator_Charm<Graph,Opts,vertexMapping>(g),
+						SSCA_Generator<Graph, Opts>(g, opts) {}
+					void generate(CkCallback & cb) {
+						if (CmiMyPe() == 0) {
+							CkPrintf("SSCA generation started\n");
+							this->info();
+							// do clique generation
+							CkPrintf("\tgenerating cliques...");
+							this->thisProxy.do_cliqueGeneration();
+							CkPrintf("...done\n");
+							CkStartQD(CkCallbackResumeThread());
+							// do edge generation
+							CkPrintf("\tgenerating edges...");
+							this->thisProxy.do_edgeGeneration();
+							CkPrintf("...done\n");
+							CkStartQD(CkCallbackResumeThread());
+							// return control to application 
+							cb.send();
+						}
 					}
-				}
-
-				void addEdge(const std::pair<uint64_t,uint64_t> & e) {
-					double w = drand48();
-					g.getProxy()[e.first].connectVertex(typename Graph::Edge(e.second, w));
-					g.getProxy()[e.second].connectVertex(typename Graph::Edge(e.first, w));
-				}
-
-				void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) {
-					this->thisProxy[pe].addVertexToClique(v,c);
-				}
-
-				void sndMsg_addInterCliqueEdge(int pe, CmiUInt8 v, CmiUInt8 u, CmiUInt8 c) {
-					this->thisProxy[pe].addInterCliqueEdge(v,u,c);
-				}
-
-			private:
-				Graph g;
+					void addEdge(const std::pair<uint64_t,uint64_t> & e) {
+						Base_Generator_Charm<Graph,Opts,vertexMapping>::addEdge(e);
+					}
+					void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) {
+						this->thisProxy[pe].addVertexToClique(v,c);
+					}
+					void sndMsg_addInterCliqueEdge(int pe, CmiUInt8 v, CmiUInt8 u, CmiUInt8 c) {
+						this->thisProxy[pe].addInterCliqueEdge(v,u,c);
+					}
+				private:
+					Graph g;
 		};
 
-	template <class Graph, class Opts>
-		class SSCA_Generator_Charm<Graph, Opts, VertexMapping::MultiVertex> : 
-			public CBase_SSCA_Generator_Charm <Graph, Opts, VertexMapping::MultiVertex>, 
-				public SSCA_Generator<Graph, Opts> {
-				typedef typename Graph::Proxy CProxy_Graph;
-				typedef typename Graph::Vertex Vertex;
-				typedef typename Graph::Edge Edge;
-			public:
-				SSCA_Generator_Charm(Graph & g, Opts & opts) : g(g),  SSCA_Generator<Graph, Opts>(g, opts) {}
+	template <class Graph, class Opts, VertexMapping vertexMapping, class CProxy_Aggregator>
+		class SSCA_Generator_Tram :
+			public CBase_SSCA_Generator_Tram<Graph, Opts, vertexMapping, CProxy_Aggregator>, 
+			public Base_Generator_Tram<Graph, Opts, vertexMapping, CProxy_Aggregator>,
+			public SSCA_Generator<Graph, Opts> {
+				public:
+					SSCA_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator) : 
+						g(g), aggregator(aggregator), 
+						Base_Generator_Tram<Graph, Opts, vertexMapping, CProxy_Aggregator>(g, aggregator),
+						SSCA_Generator<Graph, Opts>(g, opts) {}
 
-				void generate(CkCallback & cb) {
-					if (CmiMyPe() == 0) {
-						CkPrintf("SSCA generation started\n");
-						this->info();
-						// do clique generation
-						CkPrintf("\tgenerating cliques...");
-						this->thisProxy.do_cliqueGeneration();
-						CkPrintf("...done\n");
-						CkStartQD(CkCallbackResumeThread());
-						// do edge generation
-						CkPrintf("\tgenerating edges...");
-						this->thisProxy.do_edgeGeneration();
-						CkPrintf("...done\n");
-						CkStartQD(CkCallbackResumeThread());
-						// return control to application 
-						cb.send();
+					void generate(CkCallback & cb) {
+						if (CmiMyPe() == 0) {
+							CkPrintf("SSCA generation started\n");
+							this->info();
+							// do clique generation
+							CkPrintf("\tgenerating cliques...");
+							this->thisProxy.do_cliqueGeneration();
+							CkPrintf("...done\n");
+							CkStartQD(CkCallbackResumeThread());
+							// do edge generation
+							CkPrintf("\tgenerating edges...");
+							this->thisProxy.do_edgeGeneration();
+							CkStartQD(CkCallbackResumeThread());
+							CkPrintf("...done\n");
+
+							//for (int i = 0; i < CmiNumPes(); i++) {
+							//	this->thisProxy[i].dump_cliques();
+							//	CkStartQD(CkCallbackResumeThread());
+							//}
+							//CkExit();
+							// return control to application 
+							cb.send();
+						}
 					}
-				}
 
-				void addEdge(const std::pair<uint64_t,uint64_t> & e) {
-					double w = drand48();
-					g.getProxy()[Graph::base(e.first)].connectVertex(std::make_pair(e.first, Edge(e.second, w)));
-				}
-
-				void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) {
-					this->thisProxy[pe].addVertexToClique(v,c);
-				}
-
-				void sndMsg_addInterCliqueEdge(int pe, CmiUInt8 v, CmiUInt8 u, CmiUInt8 c) {
-					this->thisProxy[pe].addInterCliqueEdge(v,u,c);
-				}
-
-			private:
-				Graph g;
-		};
-
-	template <class Graph, class Opts, class CProxy_Aggregator>
-		class SSCA_Generator_Tram<Graph, Opts, VertexMapping::SingleVertex, CProxy_Aggregator> : 
-			public CBase_SSCA_Generator_Tram <Graph, Opts, VertexMapping::SingleVertex, CProxy_Aggregator>, 
-				public SSCA_Generator<Graph, Opts> {
-			public:
-				SSCA_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator) : 
-					g(g), aggregator(aggregator), SSCA_Generator<Graph, Opts>(g, opts) {}
-
-				void generate(CkCallback & cb) {
-					if (CmiMyPe() == 0) {
-						CkPrintf("SSCA generation started\n");
-						this->info();
-						// do clique generation
-						CkPrintf("\tgenerating cliques...");
-						this->thisProxy.do_cliqueGeneration();
-						CkPrintf("...done\n");
-						CkStartQD(CkCallbackResumeThread());
-						// do edge generation
-						CkPrintf("\tgenerating edges...");
-						this->thisProxy.do_edgeGeneration();
-						CkStartQD(CkCallbackResumeThread());
-						CkPrintf("...done\n");
-
-						//for (int i = 0; i < CmiNumPes(); i++) {
-						//	this->thisProxy[i].dump_cliques();
-						//	CkStartQD(CkCallbackResumeThread());
-						//}
-						//CkExit();
-						// return control to application 
-						cb.send();
+					void addEdge(const std::pair<uint64_t,uint64_t> & e) {
+						Base_Generator_Tram<Graph,Opts,vertexMapping,CProxy_Aggregator>::addEdge(e);
 					}
-				}
 
-				void addEdge(const std::pair<uint64_t,uint64_t> & e) {
-					double w = drand48();
-					ArrayMeshStreamer<Edge, long long, Vertex, SimpleMeshRouter>
-						* localAggregator = aggregator.ckLocalBranch();
-					localAggregator->insertData(Edge(e.second, w), e.first);
-				}
-
-				void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) {
-					this->thisProxy[pe].addVertexToClique(v,c);
-				}
-
-				void sndMsg_addInterCliqueEdge(int pe, CmiUInt8 v, CmiUInt8 u, CmiUInt8 c) {
-					this->thisProxy[pe].addInterCliqueEdge(v,u,c);
-				}
-
-			private:
-				Graph g;
-				typedef typename Graph::Vertex Vertex;
-				typedef typename Graph::Edge Edge;
-				CProxy_Aggregator aggregator;
-		};
-
-	template <class Graph, class Opts, class CProxy_Aggregator>
-		class SSCA_Generator_Tram<Graph, Opts, VertexMapping::MultiVertex, CProxy_Aggregator> : 
-			public CBase_SSCA_Generator_Tram <Graph, Opts, VertexMapping::MultiVertex, CProxy_Aggregator>, 
-				public SSCA_Generator<Graph, Opts> {
-			public:
-				SSCA_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator) : 
-					g(g), aggregator(aggregator), SSCA_Generator<Graph, Opts>(g, opts) {}
-
-				void generate(CkCallback & cb) {
-					if (CmiMyPe() == 0) {
-						CkPrintf("SSCA generation started\n");
-						this->info();
-						// do clique generation
-						CkPrintf("\tgenerating cliques...");
-						this->thisProxy.do_cliqueGeneration();
-						CkPrintf("...done\n");
-						CkStartQD(CkCallbackResumeThread());
-						// do edge generation
-						CkPrintf("\tgenerating edges...");
-						this->thisProxy.do_edgeGeneration();
-						CkStartQD(CkCallbackResumeThread());
-						CkPrintf("...done\n");
-
-						//for (int i = 0; i < CmiNumPes(); i++) {
-						//	this->thisProxy[i].dump_cliques();
-						//	CkStartQD(CkCallbackResumeThread());
-						//}
-						//CkExit();
-						// return control to application 
-						cb.send();
+					void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) {
+						this->thisProxy[pe].addVertexToClique(v,c);
 					}
-				}
 
-				void addEdge(const std::pair<uint64_t,uint64_t> & e) {
-					double w = drand48();
-					ArrayMeshStreamer<std::pair<CmiUInt8, Edge>, long long, Vertex, SimpleMeshRouter>
-						* localAggregator = aggregator.ckLocalBranch();
-					localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), Graph::base(e.first));
-				}
+					void sndMsg_addInterCliqueEdge(int pe, CmiUInt8 v, CmiUInt8 u, CmiUInt8 c) {
+						this->thisProxy[pe].addInterCliqueEdge(v,u,c);
+					}
 
-				void sndMsg_addVertexToClique(int pe, CmiUInt8 v, CmiUInt8 c) {
-					this->thisProxy[pe].addVertexToClique(v,c);
-				}
-
-				void sndMsg_addInterCliqueEdge(int pe, CmiUInt8 v, CmiUInt8 u, CmiUInt8 c) {
-					this->thisProxy[pe].addInterCliqueEdge(v,u,c);
-				}
-
-			private:
-				Graph g;
-				typedef typename Graph::Vertex Vertex;
-				typedef typename Graph::Edge Edge;
-				CProxy_Aggregator aggregator;
+				private:
+					Graph g;
+					typedef typename Graph::Vertex Vertex;
+					typedef typename Graph::Edge Edge;
+					CProxy_Aggregator aggregator;
 		};
 
 	template <class Graph, class Opts>
