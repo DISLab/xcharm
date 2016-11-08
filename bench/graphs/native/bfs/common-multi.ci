@@ -21,3 +21,12 @@
 	//FIXME:charmxi bug
 	group GraphLib__SSCA_Generator_Charm<BFSGraph, Options,		
 		GraphLib::VertexMapping::MultiVertex>;
+
+	//FIXME:charmxi bug
+	group GraphLib__Random_Generator_Tram<BFSGraph, Options,		
+		GraphLib::VertexMapping::MultiVertex,
+		CProxy_ArrayMeshStreamer<std::pair<CmiUInt8, BFSEdge>, long long, BFSMultiVertex, SimpleMeshRouter> >;
+
+	//FIXME:charmxi bug
+	group GraphLib__Random_Generator_Charm<BFSGraph, Options,		
+		GraphLib::VertexMapping::MultiVertex>;

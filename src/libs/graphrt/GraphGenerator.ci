@@ -46,12 +46,14 @@ module GraphGenerator {
 			group Random_Generator_Charm  {
 				entry Random_Generator_Charm(Graph & g, Opts & opts);
 				entry [threaded] void generate(CkCallback & cb);
+				entry void do_edgeGeneration();
 			};	
 
-		template <class Graph, class Opts, VertexMapping vertexMapping> 
+		template <class Graph, class Opts, VertexMapping vertexMapping, class CProxy_Aggregator> 
 			group Random_Generator_Tram  {
-				entry Random_Generator_Tram(Graph & g, Opts & opts);
+				entry Random_Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator);
 				entry [threaded] void generate(CkCallback & cb);
+				entry void do_edgeGeneration();
 			};	
 	}
 };
