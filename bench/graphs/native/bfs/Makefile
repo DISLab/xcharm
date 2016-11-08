@@ -57,19 +57,19 @@ tram_multivertex_bfs-ssca.o: tram_multivertex_bfs.C tram_multivertex_bfs.decl.h 
 
 charm_bfs-random: charm_bfs-random.o
 charm_bfs-random.o: charm_bfs.C charm_bfs.decl.h charm_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=Random
 
 tram_bfs_radix-random: tram_bfs_radix-random.o
 tram_bfs_radix-random.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=Random
 
 charm_multivertex_bfs-random: charm_multivertex_bfs-random.o
 charm_multivertex_bfs-random.o: charm_multivertex_bfs.C charm_multivertex_bfs.decl.h charm_multivertex_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=Random
 
 tram_multivertex_bfs-random: tram_multivertex_bfs-random.o
 tram_multivertex_bfs-random.o: tram_multivertex_bfs.C tram_multivertex_bfs.decl.h tram_multivertex_bfs.def.h
-	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=Random
 
 %: %.o 
 	$(CHARMC) $(CHARMC_LINK_FLAGS) -language charm++ -o $@ .tmp/$< -module NDMeshStreamer
