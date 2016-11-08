@@ -61,7 +61,7 @@ public:
 		// Instantiate communication library group with a handle to the client
 		aggregator =
 			CProxy_ArrayMeshStreamer<dtype, long long, BFSVertex, SimpleMeshRouter>
-			::ckNew(numMsgsBuffered, 2, dims, g, 1);
+			::ckNew(numMsgsBuffered, 2, dims, g, 0);
 	}
 	void start(CmiUInt8 root) {
     CkCallback startCb(CkIndex_BFSVertex::make_root(), g[root]);
