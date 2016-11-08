@@ -1,5 +1,6 @@
 #ifndef __GeneratorRMAT_h_
 #define __GeneratorRMAT_h_
+#include "Generator.h"
 
 namespace GraphLib {
 
@@ -38,8 +39,12 @@ namespace GraphLib {
 					}
 					void addEdge(std::pair<uint64_t,uint64_t> & e) {
 						double w = drand48();
-						graphProxy[e.first].connectVertex(Edge(e.second, w));
-						//graphProxy[e.second].connectVertex(Edge(e.first, w));
+						if (g.directed)
+							graphProxy[e.first].connectVertex(Edge(e.second, w));
+						else {
+							graphProxy[e.first].connectVertex(Edge(e.second, w));
+						  graphProxy[e.second].connectVertex(Edge(e.first, w));
+						}
 					}
 			};
 
@@ -69,9 +74,12 @@ namespace GraphLib {
 					}
 					void addEdge(std::pair<uint64_t,uint64_t> & e) {
 						double w = drand48();
-						//graphProxy[e.first / (opts.N / CmiNumPes())].connectVertex(Edge(e.second, w));
-						graphProxy[Graph::base(e.first)].connectVertex(std::make_pair(e.first, Edge(e.second, w)));
-						//graphProxy[e.second].connectVertex(Edge(e.first, w));
+						if (g.directed)
+							graphProxy[Graph::base(e.first)].connectVertex(std::make_pair(e.first, Edge(e.second, w)));
+						else {
+							graphProxy[Graph::base(e.first)].connectVertex(std::make_pair(e.first, Edge(e.second, w)));
+							graphProxy[Graph::base(e.second)].connectVertex(std::make_pair(e.second, Edge(e.first, w)));
+						}
 					}
 			};
 
@@ -102,12 +110,14 @@ namespace GraphLib {
 					}
 					void addEdge(std::pair<uint64_t,uint64_t> & e) {
 						double w = drand48();
-
-						//CkPrintf("adding edge (%lld, %lld)\n", e.first, e.second);
 						ArrayMeshStreamer<Edge, long long, Vertex, SimpleMeshRouter>
 							* localAggregator = aggregator.ckLocalBranch();
-						localAggregator->insertData(Edge(e.second, w), e.first);
-						//localAggregator->insertData(Edge(e.first, w), e.second);
+						if (g.directed) {
+							localAggregator->insertData(Edge(e.second, w), e.first);
+						} else {
+							localAggregator->insertData(Edge(e.second, w), e.first);
+							localAggregator->insertData(Edge(e.first, w), e.second);
+						}
 					}
 			};
 
@@ -137,12 +147,14 @@ namespace GraphLib {
 					}
 					void addEdge(std::pair<uint64_t,uint64_t> & e) {
 						double w = drand48();
-
-						//CkPrintf("adding edge (%lld, %lld)\n", e.first, e.second);
 						ArrayMeshStreamer<std::pair<CmiUInt8, Edge>, long long, Vertex, SimpleMeshRouter>
 							* localAggregator = aggregator.ckLocalBranch();
-						localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), Graph::base(e.first));
-						//localAggregator->insertData(Edge(e.first, w), e.second);
+						if (g.directed) {
+							localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), Graph::base(e.first));
+						} else {
+							localAggregator->insertData(std::make_pair(e.first, Edge(e.second, w)), Graph::base(e.first));
+							localAggregator->insertData(std::make_pair(e.second, Edge(e.first, w)), Graph::base(e.second));
+						}
 					}
 			};
 

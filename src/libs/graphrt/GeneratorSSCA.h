@@ -1,6 +1,7 @@
 #ifndef __GeneratorSSCA_h__
 #define __GeneratorSSCA_h__
 #include <algorithm>
+#include "Generator.h"
 
 namespace GraphLib {
 

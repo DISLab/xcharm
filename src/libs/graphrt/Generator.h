@@ -32,8 +32,4 @@ namespace GraphLib {
 
 }
 
-#include "GeneratorRMAT.h"
-#include "GeneratorSSCA.h"
-#include "GeneratorRandom.h"
-
 #endif

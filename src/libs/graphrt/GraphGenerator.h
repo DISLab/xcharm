@@ -5,7 +5,10 @@
 #include <boost/timer/timer.hpp>
 #include "NDMeshStreamer.h"
 #include "DataTypes.h"
-#include "Generator.h"
+#include "GeneratorRMAT.h"
+#include "GeneratorSSCA.h"
+#include "GeneratorRandom.h"
+
 #include "GraphGenerator.decl.h"
 
 namespace GraphLib {
