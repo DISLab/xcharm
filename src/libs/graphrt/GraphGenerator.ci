@@ -1,26 +1,7 @@
 module GraphGenerator {
 	extern module NDMeshStreamer;
 	namespace GraphLib {
-		// old generators (TODO: remove them)
-		template <class Graph, class Opts, VertexMapping vertexMapping, GraphGeneratorType graphGeneratorType> 
-			group Generator_Charm  {
-				entry Generator_Charm(Graph & g, Opts & opts);
-				//entry [threaded] void generate(CkCallback & cb);
-				entry [threaded] void generate();
-			};	
-		template <class Graph, class Opts, VertexMapping vertexMapping, GraphGeneratorType graphGeneratorType, class CProxy_Aggregator> 
-			group Generator_Tram  {
-				entry Generator_Tram(Graph & g, Opts & opts, CProxy_Aggregator & aggregator);
-				//entry [threaded] void generate(CkCallback & cb);
-				entry [threaded] void generate();
-			};	
-		template <class Graph, class Opts, VertexMapping vertexMapping, GraphGeneratorType graphGeneratorType> 
-			group Generator_uChareLib  {
-				entry Generator_uChareLib(Graph & g, Opts & opts);
-				entry [threaded] void generate(CkCallback & cb);
-			};	
 
-		// new generators
 		template <class Graph, class Opts, VertexMapping vertexMapping> 
 			group SSCA_Generator_Charm  {
 				entry SSCA_Generator_Charm(Graph & g, Opts & opts);
