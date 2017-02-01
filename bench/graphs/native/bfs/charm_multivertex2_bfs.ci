@@ -1,0 +1,35 @@
+mainmodule charm_multivertex2_bfs {
+	extern module GraphGenerator;
+
+  // Mean arrity of the graph 
+  readonly int                             K;
+  // Graph size (number of vertices)
+  readonly CmiUInt8                         N;
+  readonly CmiUInt8                         M;
+  // Handle to the test driver (chare)
+  readonly CProxy_TestDriver               driverProxy;
+
+  mainchare TestDriver {
+    entry TestDriver (CkArgMsg *args);
+    entry void start();
+    entry void restart();
+		entry void startVerificationPhase();
+    entry [reductiontarget] void done(CmiUInt8 globalNumScannedEdges);
+    //entry void startVerificationPhase();
+		entry void startGraphConstruction();
+		entry void exit();
+  };
+
+	class BFSEdge;
+  array [1D] BFSMultiVertex {
+    entry BFSMultiVertex();
+		entry void connectVertex(std::pair<CmiUInt8, BFSEdge> & edge);
+		entry void make_root(const CmiUInt8 & root);
+		entry void update(const CmiUInt8 & v, const int & level, const CmiUInt8 & parent); 
+		entry void verify(); 
+		entry void check(const CmiUInt8 & v, const int & level); 
+		entry void getScannedVertexNum();
+  };
+
+#include "common-multi.ci"
+};

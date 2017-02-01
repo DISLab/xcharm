@@ -11,7 +11,7 @@ XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 
-RMAT_BINARY= charm_bfs-rmat tram_bfs_radix-rmat charm_multivertex_bfs-rmat tram_multivertex_bfs-rmat 
+RMAT_BINARY= charm_bfs-rmat tram_bfs_radix-rmat charm_multivertex_bfs-rmat charm_multivertex2_bfs-rmat tram_multivertex_bfs-rmat 
 SSCA_BINARY= charm_bfs-ssca tram_bfs_radix-ssca charm_multivertex_bfs-ssca tram_multivertex_bfs-ssca 
 RANDOM_BINARY= charm_bfs-random tram_bfs_radix-random charm_multivertex_bfs-random tram_multivertex_bfs-random 
 
@@ -33,6 +33,11 @@ tram_bfs_radix-rmat.o: tram_bfs_radix.C tram_bfs_radix.decl.h tram_bfs_radix.def
 
 charm_multivertex_bfs-rmat: charm_multivertex_bfs-rmat.o
 charm_multivertex_bfs-rmat.o: charm_multivertex_bfs.C charm_multivertex_bfs.decl.h charm_multivertex_bfs.def.h
+	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
+
+
+charm_multivertex2_bfs-rmat: charm_multivertex2_bfs-rmat.o
+charm_multivertex2_bfs-rmat.o: charm_multivertex2_bfs.C charm_multivertex2_bfs.decl.h charm_multivertex2_bfs.def.h
 	$(CHARMC) $(CHARMC_COMPILE_FLAGS) -language charm++ -c -o ./.tmp/$@ $< -DGRAPH=RMAT
 
 tram_multivertex_bfs-rmat: tram_multivertex_bfs-rmat.o
