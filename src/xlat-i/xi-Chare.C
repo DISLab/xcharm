@@ -1528,6 +1528,12 @@ UChare::genDecls(XStr& str)
 		str << "      " << "uChareArray <" << type << "," << Prefix::Proxy << type << "," << Prefix::Base << type << "> (uchareArray) " << "{}\n";
 
 		// ckNew
+  	str << "   " << "static " << Prefix::Proxy << "uChare_" << type << " ckNew (const CmiUInt8 & nElements) {\n";
+		str << "      " <<  "return " << "uChareArray <" << type << "," << Prefix::Proxy << type << "," << Prefix::Base << type << ">" 
+			<< "::ckNew (\n"; 
+		str << "         " << "uChareArrayOpts<" << type << "," << Prefix::Proxy << type << "," << Prefix::Base << type << ">" 
+			<< "(nElements, CkNumPes())" << "); " << "}\n";
+
   	str << "   " << "static " << Prefix::Proxy << "uChare_" << type << " ckNew (int nElements, int nChareSets) {\n";
 		str << "      " <<  "return " << "uChareArray <" << type << "," << Prefix::Proxy << type << "," << Prefix::Base << type << ">" 
 			<< "::ckNew (\n"; 

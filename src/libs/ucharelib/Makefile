@@ -20,5 +20,6 @@ uChareLib.o: uChareLib.C uChareLib.decl.h
 	$(CHARMC) $< 
 
 clean:
-	rm -f *.decl.h *.def.h *.o 
+	rm -f *.decl.h *.def.h *.o *.a
+
 

@@ -31,7 +31,7 @@ public:
 		CkPrintf("\tgraph (s=%d, k=%d), scaling: %s\n", opts.scale, opts.K, (opts.strongscale) ? "strong" : "weak");
 		CkPrintf("Start graph construction:........\n");
     starttime = CkWallTimer();
-		generator->generate();
+		generator->generate(CkCallback(CkIndex_TestDriver::start(), thishandle));
 		CkStartQD(CkIndex_TestDriver::start(), &thishandle);
 	}
 

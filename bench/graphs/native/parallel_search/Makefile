@@ -5,9 +5,9 @@ CHARMC_COMPILE_FLAGS= -g -I./.tmp -I../.. -I../../../../include/graphrt  -I../..
 CHARMC_LINK_FLAGS=-L./.tmp -L../../../../lib -lGraph \
 									-L$(BOOST_ROOT)/lib  -lboost_system -lboost_timer -lboost_chrono \
 									-module ampi
-XCHARMC_COMPILE_FLAGS=-I. -I../../../include -I../../../include/ucharelib -I../../../include/NDMeshStreamer \
+XCHARMC_COMPILE_FLAGS=-I. -I../../../../include -I../../../../include/ucharelib -I../../../../include/NDMeshStreamer \
 											$(CHARMC_COMPILE_FLAGS)
-XCHARMC_LINK_FLAGS=-L. -L../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
+XCHARMC_LINK_FLAGS=-L. -L../../../../lib -lmoduleuChareLib -lmoduleNDMeshStreamer \
 									 -module completion -module ampi \
 									 $(CHARMC_LINK_FLAGS)
 

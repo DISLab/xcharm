@@ -431,6 +431,12 @@ class uChareArray {
 			return uchareArray; 
 		}
 
+
+		static uChareArray ckNew(const CmiUInt8 & nElements) { 
+			uChareArray uchareArray(nElements, CkNumPes());
+			return uchareArray; 
+		}
+
 		void init() {
 			CkAbort("uChareArray::init is deprecated");
 		}

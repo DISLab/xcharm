@@ -24,7 +24,7 @@ mainmodule charm_randomAccess {
     entry Updater();
     // This method generates keys that index into the global table.
     // Each generated key is submitted to the communication library
-    entry [threaded] void  generateUpdates();
+    entry [threaded] void generateUpdates();
     // Used for verification
     entry void checkErrors();
 
